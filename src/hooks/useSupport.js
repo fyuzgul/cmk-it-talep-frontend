@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supportService } from '../services/supportService';
 
 export const useSupport = () => {
@@ -6,7 +6,7 @@ export const useSupport = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchSupportTypes = async () => {
+  const fetchSupportTypes = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -19,7 +19,7 @@ export const useSupport = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const createSupportType = async (typeData) => {
     try {

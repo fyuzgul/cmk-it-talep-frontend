@@ -7,14 +7,19 @@ import RequestStatusManagement from './admin/RequestStatusManagement';
 import RequestTypeManagement from './admin/RequestTypeManagement';
 import SupportTypeManagement from './admin/SupportTypeManagement';
 import UserManagement from './admin/UserManagement';
+import CreateRequest from './user/CreateRequest';
+import MyRequests from './user/MyRequests';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [refreshKey, setRefreshKey] = useState(0);
   const isAdmin = user?.userType?.name === 'admin' || user?.typeId === 1;
+  const isUser = user?.userType?.name === 'user' || user?.typeId === 2;
 
   const renderContent = () => {
     switch (activeTab) {
+      // Admin tabs
       case 'departments':
         return <DepartmentManagement />;
       case 'requests':
@@ -29,6 +34,13 @@ const Dashboard = () => {
         return <SupportTypeManagement />;
       case 'users':
         return <UserManagement />;
+      
+      // User tabs
+      case 'createRequest':
+        return <CreateRequest onRequestCreated={() => setRefreshKey(prev => prev + 1)} />;
+      case 'myRequests':
+        return <MyRequests key={refreshKey} />;
+      
       case 'dashboard':
       default:
         return (
@@ -41,6 +53,22 @@ const Dashboard = () => {
                 <p className="text-gray-600">
                   IT Talep Sistemi ana sayfası. Burada sistem özellikleri eklenecek.
                 </p>
+                {isUser && (
+                  <div className="mt-6 space-x-4">
+                    <button
+                      onClick={() => setActiveTab('createRequest')}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-md text-sm font-medium"
+                    >
+                      Yeni Talep Oluştur
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('myRequests')}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md text-sm font-medium"
+                    >
+                      Taleplerimi Görüntüle
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -51,92 +79,124 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      {isAdmin && (
+      {(isAdmin || isUser) && (
         <div className="w-64 bg-white shadow-lg">
           <div className="p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Admin Panel</h2>
-                        <nav className="space-y-2">
-                          <button
-                            onClick={() => setActiveTab('dashboard')}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                              activeTab === 'dashboard'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            Dashboard
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('departments')}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                              activeTab === 'departments'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            Departman Yönetimi
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('requests')}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                              activeTab === 'requests'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            Talep Yönetimi
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('requestTypes')}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                              activeTab === 'requestTypes'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            Talep/İstek Türü Yönetimi
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('requestStatuses')}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                              activeTab === 'requestStatuses'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            Talep Durumu Yönetimi
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('requestTypeManagement')}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                              activeTab === 'requestTypeManagement'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            Talep Türü Yönetimi
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('supportTypes')}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                              activeTab === 'supportTypes'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            Destek Türü Yönetimi
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('users')}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                              activeTab === 'users'
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            Kullanıcı Yönetimi
-                          </button>
-                        </nav>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {isAdmin ? 'Admin Panel' : 'Kullanıcı Paneli'}
+            </h2>
+            <nav className="space-y-2">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                  activeTab === 'dashboard'
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Dashboard
+              </button>
+              
+              {isAdmin && (
+                <>
+                  <button
+                    onClick={() => setActiveTab('departments')}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'departments'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Departman Yönetimi
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('requests')}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'requests'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Talep Yönetimi
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('requestTypes')}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'requestTypes'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Talep/İstek Türü Yönetimi
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('requestStatuses')}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'requestStatuses'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Talep Durumu Yönetimi
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('requestTypeManagement')}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'requestTypeManagement'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Talep Türü Yönetimi
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('supportTypes')}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'supportTypes'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Destek Türü Yönetimi
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('users')}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'users'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Kullanıcı Yönetimi
+                  </button>
+                </>
+              )}
+              
+              {isUser && (
+                <>
+                  <button
+                    onClick={() => setActiveTab('createRequest')}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'createRequest'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Yeni Talep Oluştur
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('myRequests')}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                      activeTab === 'myRequests'
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Taleplerim
+                  </button>
+                </>
+              )}
+            </nav>
           </div>
         </div>
       )}

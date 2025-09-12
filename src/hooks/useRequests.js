@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { requestService } from '../services/requestService';
 
 export const useRequests = () => {
@@ -195,7 +195,7 @@ export const useRequests = () => {
   };
 
   // Request Management
-  const fetchRequests = async (params = {}) => {
+  const fetchRequests = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       setError(null);
@@ -209,9 +209,9 @@ export const useRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getRequestById = async (id) => {
+  const getRequestById = useCallback(async (id) => {
     try {
       setLoading(true);
       setError(null);
@@ -223,9 +223,9 @@ export const useRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const createRequest = async (requestData) => {
+  const createRequest = useCallback(async (requestData) => {
     try {
       setLoading(true);
       setError(null);
@@ -238,9 +238,9 @@ export const useRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchRequests]);
 
-  const updateRequest = async (id, requestData) => {
+  const updateRequest = useCallback(async (id, requestData) => {
     try {
       setLoading(true);
       setError(null);
@@ -253,9 +253,9 @@ export const useRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchRequests]);
 
-  const deleteRequest = async (id) => {
+  const deleteRequest = useCallback(async (id) => {
     try {
       setLoading(true);
       setError(null);
@@ -268,7 +268,24 @@ export const useRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchRequests]);
+
+  // Get requests by creator
+  const getRequestsByCreator = useCallback(async (requestCreatorId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await requestService.getRequestsByCreator(requestCreatorId);
+      setRequests(data);
+      return data;
+    } catch (err) {
+      console.error('Error fetching requests by creator:', err);
+      setError(err.response?.data?.message || 'Kullanıcı talepleri yüklenirken bir hata oluştu');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Fetch all data on component mount
   useEffect(() => {
@@ -320,6 +337,7 @@ export const useRequests = () => {
     createRequest,
     updateRequest,
     deleteRequest,
+    getRequestsByCreator,
     
     // Common
     loading,
