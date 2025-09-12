@@ -5,6 +5,7 @@ export const useRequests = () => {
   const [requestTypes, setRequestTypes] = useState([]);
   const [requestStatuses, setRequestStatuses] = useState([]);
   const [requestResponseTypes, setRequestResponseTypes] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -193,6 +194,82 @@ export const useRequests = () => {
     }
   };
 
+  // Request Management
+  const fetchRequests = async (params = {}) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await requestService.getRequests(params);
+      setRequests(data);
+      return data;
+    } catch (err) {
+      console.error('Error fetching requests:', err);
+      setError(err.response?.data?.message || 'Talepler yüklenirken bir hata oluştu');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRequestById = async (id) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await requestService.getRequestById(id);
+      return data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Talep detayları yüklenirken bir hata oluştu');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createRequest = async (requestData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await requestService.createRequest(requestData);
+      await fetchRequests(); // Refresh the list
+      return result;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Talep oluşturulurken bir hata oluştu');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateRequest = async (id, requestData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await requestService.updateRequest(id, requestData);
+      await fetchRequests(); // Refresh the list
+      return result;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Talep güncellenirken bir hata oluştu');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteRequest = async (id) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await requestService.deleteRequest(id);
+      await fetchRequests(); // Refresh the list
+      return result;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Talep silinirken bir hata oluştu');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch all data on component mount
   useEffect(() => {
     const fetchAllData = async () => {
@@ -235,6 +312,14 @@ export const useRequests = () => {
     createRequestResponseType,
     updateRequestResponseType,
     deleteRequestResponseType,
+    
+    // Request Management
+    requests,
+    fetchRequests,
+    getRequestById,
+    createRequest,
+    updateRequest,
+    deleteRequest,
     
     // Common
     loading,

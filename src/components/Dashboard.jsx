@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import DepartmentManagement from './admin/DepartmentManagement';
+import RequestManagement from './admin/RequestManagement';
 import RequestResponseTypeManagement from './admin/RequestResponseTypeManagement';
 import RequestStatusManagement from './admin/RequestStatusManagement';
 import RequestTypeManagement from './admin/RequestTypeManagement';
@@ -16,6 +17,8 @@ const Dashboard = () => {
     switch (activeTab) {
       case 'departments':
         return <DepartmentManagement />;
+      case 'requests':
+        return <RequestManagement />;
       case 'requestTypes':
         return <RequestResponseTypeManagement />;
       case 'requestStatuses':
@@ -72,6 +75,16 @@ const Dashboard = () => {
                             }`}
                           >
                             Departman Yönetimi
+                          </button>
+                          <button
+                            onClick={() => setActiveTab('requests')}
+                            className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
+                              activeTab === 'requests'
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            Talep Yönetimi
                           </button>
                           <button
                             onClick={() => setActiveTab('requestTypes')}
