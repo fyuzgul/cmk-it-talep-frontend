@@ -1,29 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { commonAPI } from '../../services/api';
+import React, { useState } from 'react';
+import { useDepartments } from '../../hooks/useDepartments';
 
 const DepartmentManagement = () => {
-  const [departments, setDepartments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    departments,
+    loading,
+    error,
+    createDepartment,
+    updateDepartment,
+    deleteDepartment,
+  } = useDepartments();
+
   const [showModal, setShowModal] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
   const [formData, setFormData] = useState({ name: '' });
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
-
-  const fetchDepartments = async () => {
-    try {
-      setLoading(true);
-      const data = await commonAPI.getDepartments();
-      setDepartments(data);
-    } catch (error) {
-      console.error('Error fetching departments:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -59,17 +50,16 @@ const DepartmentManagement = () => {
           id: editingDepartment.id,
           name: formData.name
         };
-        await commonAPI.updateDepartment(editingDepartment.id, updateData);
+        await updateDepartment(editingDepartment.id, updateData);
       } else {
         // Create department
-        await commonAPI.createDepartment(formData);
+        await createDepartment(formData);
       }
       
       setShowModal(false);
       setEditingDepartment(null);
       setFormData({ name: '' });
       setErrors({});
-      fetchDepartments();
     } catch (error) {
       console.error('Error saving department:', error);
     }
@@ -84,8 +74,7 @@ const DepartmentManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bu departmanı silmek istediğinizden emin misiniz?')) {
       try {
-        await commonAPI.deleteDepartment(id);
-        fetchDepartments();
+        await deleteDepartment(id);
       } catch (error) {
         console.error('Error deleting department:', error);
       }

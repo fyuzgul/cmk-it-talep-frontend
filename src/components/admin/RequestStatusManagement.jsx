@@ -1,31 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { commonAPI } from '../../services/api';
+import React, { useState } from 'react';
+import { useRequests } from '../../hooks/useRequests';
 
 const RequestStatusManagement = () => {
-  const [statuses, setStatuses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    requestStatuses: statuses,
+    loading,
+    error,
+    createRequestStatus,
+    updateRequestStatus,
+    deleteRequestStatus,
+  } = useRequests();
+
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ name: '' });
   const [editingStatus, setEditingStatus] = useState(null);
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    fetchStatuses();
-  }, []);
-
-  const fetchStatuses = async () => {
-    try {
-      setLoading(true);
-      const data = await commonAPI.getRequestStatuses();
-      setStatuses(data);
-    } catch (err) {
-      setError('Talep durumları yüklenirken bir hata oluştu.');
-      console.error('Error fetching statuses:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -55,20 +44,18 @@ const RequestStatusManagement = () => {
           id: editingStatus.id,
           name: formData.name
         };
-        await commonAPI.updateRequestStatus(editingStatus.id, updateData);
+        await updateRequestStatus(editingStatus.id, updateData);
       } else {
         // Create status
-        await commonAPI.createRequestStatus(formData);
+        await createRequestStatus(formData);
       }
 
       setShowModal(false);
       setEditingStatus(null);
       setFormData({ name: '' });
       setErrors({});
-      fetchStatuses();
     } catch (error) {
       console.error('Error saving status:', error);
-      setError('Durum kaydedilirken bir hata oluştu.');
     }
   };
 
@@ -81,11 +68,9 @@ const RequestStatusManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bu durumu silmek istediğinizden emin misiniz?')) {
       try {
-        await commonAPI.deleteRequestStatus(id);
-        fetchStatuses();
+        await deleteRequestStatus(id);
       } catch (error) {
         console.error('Error deleting status:', error);
-        setError('Durum silinirken bir hata oluştu.');
       }
     }
   };

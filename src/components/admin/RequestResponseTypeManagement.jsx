@@ -1,31 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { commonAPI } from '../../services/api';
+import React, { useState } from 'react';
+import { useRequests } from '../../hooks/useRequests';
 
 const RequestResponseTypeManagement = () => {
-  const [types, setTypes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    requestResponseTypes: types,
+    loading,
+    error,
+    createRequestResponseType,
+    updateRequestResponseType,
+    deleteRequestResponseType,
+  } = useRequests();
+
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ name: '' });
   const [editingType, setEditingType] = useState(null);
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    fetchTypes();
-  }, []);
-
-  const fetchTypes = async () => {
-    try {
-      setLoading(true);
-      const data = await commonAPI.getRequestResponseTypes();
-      setTypes(data);
-    } catch (err) {
-      setError('Talep/İstek türleri yüklenirken bir hata oluştu.');
-      console.error('Error fetching types:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -55,20 +44,18 @@ const RequestResponseTypeManagement = () => {
           id: editingType.id,
           name: formData.name
         };
-        await commonAPI.updateRequestResponseType(editingType.id, updateData);
+        await updateRequestResponseType(editingType.id, updateData);
       } else {
         // Create type
-        await commonAPI.createRequestResponseType(formData);
+        await createRequestResponseType(formData);
       }
 
       setShowModal(false);
       setEditingType(null);
       setFormData({ name: '' });
       setErrors({});
-      fetchTypes();
     } catch (error) {
       console.error('Error saving type:', error);
-      setError('Tür kaydedilirken bir hata oluştu.');
     }
   };
 
@@ -81,11 +68,9 @@ const RequestResponseTypeManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bu türü silmek istediğinizden emin misiniz?')) {
       try {
-        await commonAPI.deleteRequestResponseType(id);
-        fetchTypes();
+        await deleteRequestResponseType(id);
       } catch (error) {
         console.error('Error deleting type:', error);
-        setError('Tür silinirken bir hata oluştu.');
       }
     }
   };

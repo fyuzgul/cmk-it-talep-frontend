@@ -1,31 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { commonAPI } from '../../services/api';
+import React, { useState } from 'react';
+import { useSupport } from '../../hooks/useSupport';
 
 const SupportTypeManagement = () => {
-  const [supportTypes, setSupportTypes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    supportTypes,
+    loading,
+    error,
+    createSupportType,
+    updateSupportType,
+    deleteSupportType,
+  } = useSupport();
+
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ name: '' });
   const [editingType, setEditingType] = useState(null);
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    fetchSupportTypes();
-  }, []);
-
-  const fetchSupportTypes = async () => {
-    try {
-      setLoading(true);
-      const data = await commonAPI.getSupportTypes();
-      setSupportTypes(data);
-    } catch (err) {
-      setError('Destek türleri yüklenirken bir hata oluştu.');
-      console.error('Error fetching support types:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -55,20 +44,18 @@ const SupportTypeManagement = () => {
           id: editingType.id,
           name: formData.name
         };
-        await commonAPI.updateSupportType(editingType.id, updateData);
+        await updateSupportType(editingType.id, updateData);
       } else {
         // Create type
-        await commonAPI.createSupportType(formData);
+        await createSupportType(formData);
       }
 
       setShowModal(false);
       setEditingType(null);
       setFormData({ name: '' });
       setErrors({});
-      fetchSupportTypes();
     } catch (error) {
       console.error('Error saving support type:', error);
-      setError('Destek türü kaydedilirken bir hata oluştu.');
     }
   };
 
@@ -81,11 +68,9 @@ const SupportTypeManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bu destek türünü silmek istediğinizden emin misiniz?')) {
       try {
-        await commonAPI.deleteSupportType(id);
-        fetchSupportTypes();
+        await deleteSupportType(id);
       } catch (error) {
         console.error('Error deleting support type:', error);
-        setError('Destek türü silinirken bir hata oluştu.');
       }
     }
   };

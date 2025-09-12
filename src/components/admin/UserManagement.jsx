@@ -1,12 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { commonAPI } from '../../services/api';
+import React, { useState } from 'react';
+import { useUsers } from '../../hooks/useUsers';
+import { useDepartments } from '../../hooks/useDepartments';
 
 const UserManagement = () => {
-  const [users, setUsers] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [userTypes, setUserTypes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    users,
+    userTypes,
+    loading: usersLoading,
+    error: usersError,
+    createUser,
+    updateUser,
+    deleteUser,
+  } = useUsers();
+
+  const {
+    departments,
+    loading: departmentsLoading,
+    error: departmentsError,
+  } = useDepartments();
+
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ 
     firstName: '',
@@ -19,28 +31,8 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [usersData, departmentsData, userTypesData] = await Promise.all([
-        commonAPI.getUsers(),
-        commonAPI.getDepartments(),
-        commonAPI.getUserTypes()
-      ]);
-      setUsers(usersData);
-      setDepartments(departmentsData);
-      setUserTypes(userTypesData);
-    } catch (err) {
-      setError('Veriler yüklenirken bir hata oluştu.');
-      console.error('Error fetching data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = usersLoading || departmentsLoading;
+  const error = usersError || departmentsError;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -102,10 +94,10 @@ const UserManagement = () => {
           id: editingUser.id,
           ...submitData
         };
-        await commonAPI.updateUser(editingUser.id, updateData);
+        await updateUser(editingUser.id, updateData);
       } else {
         // Create user
-        await commonAPI.createUser(submitData);
+        await createUser(submitData);
       }
 
       setShowModal(false);
@@ -119,10 +111,8 @@ const UserManagement = () => {
         typeId: ''
       });
       setErrors({});
-      fetchData();
     } catch (error) {
       console.error('Error saving user:', error);
-      setError('Kullanıcı kaydedilirken bir hata oluştu.');
     }
   };
 
@@ -142,11 +132,9 @@ const UserManagement = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) {
       try {
-        await commonAPI.deleteUser(id);
-        fetchData();
+        await deleteUser(id);
       } catch (error) {
         console.error('Error deleting user:', error);
-        setError('Kullanıcı silinirken bir hata oluştu.');
       }
     }
   };
