@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom color variables */
+:root {
+  --primary-red: rgb(230, 2, 17);
+  --primary-dark: rgb(41, 41, 38);
+  --primary-red-light: rgba(230, 2, 17, 0.1);
+  --primary-dark-light: rgba(41, 41, 38, 0.1);
+}
+
+/* Base styles with custom colors */
+body {
+  background-color: #f8fafc;
+  color: var(--primary-dark);
+}
+
 /* Custom styles for drag and drop */
 .line-clamp-2 {
   display: -webkit-box;

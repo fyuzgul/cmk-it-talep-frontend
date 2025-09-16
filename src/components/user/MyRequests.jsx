@@ -216,7 +216,7 @@ const MyRequests = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-red"></div>
       </div>
     );
   }
@@ -230,17 +230,17 @@ const MyRequests = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Taleplerim</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-primary-dark mb-2">Taleplerim</h2>
         <p className="text-gray-600">Oluşturduğunuz tüm talepleri buradan görüntüleyebilirsiniz.</p>
       </div>
 
       {/* Filtreler */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="status" className="block text-sm font-medium text-primary-dark mb-1">
               Durum
             </label>
             <select
@@ -248,7 +248,7 @@ const MyRequests = () => {
               name="status"
               value={filters.status}
               onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
             >
               <option value="">Tüm Durumlar</option>
               {requestStatuses.map((status) => (
@@ -260,7 +260,7 @@ const MyRequests = () => {
           </div>
 
           <div>
-            <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="type" className="block text-sm font-medium text-primary-dark mb-1">
               Talep Türü
             </label>
             <select
@@ -268,7 +268,7 @@ const MyRequests = () => {
               name="type"
               value={filters.type}
               onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
             >
               <option value="">Tüm Türler</option>
               {requestTypes.map((type) => (
@@ -279,8 +279,8 @@ const MyRequests = () => {
             </select>
           </div>
 
-          <div>
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <label htmlFor="search" className="block text-sm font-medium text-primary-dark mb-1">
               Arama
             </label>
             <input
@@ -290,7 +290,7 @@ const MyRequests = () => {
               value={filters.search}
               onChange={handleFilterChange}
               placeholder="Açıklamada ara..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
             />
           </div>
         </div>

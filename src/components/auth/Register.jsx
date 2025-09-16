@@ -108,21 +108,21 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-6">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-2xl sm:text-3xl font-extrabold text-primary-dark">
             Hesap oluşturun
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             IT Talep Sistemi
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="firstName" className="block text-sm font-medium text-primary-dark">
                   Ad
                 </label>
                 <input
@@ -130,9 +130,9 @@ const Register = () => {
                   name="firstName"
                   type="text"
                   required
-                  className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
+                  className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
                     errors.firstName ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                  } placeholder-gray-500 text-primary-dark rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm`}
                   placeholder="Adınız"
                   value={formData.firstName}
                   onChange={handleChange}
@@ -142,7 +142,7 @@ const Register = () => {
                 )}
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="lastName" className="block text-sm font-medium text-primary-dark">
                   Soyad
                 </label>
                 <input
@@ -150,9 +150,9 @@ const Register = () => {
                   name="lastName"
                   type="text"
                   required
-                  className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
+                  className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
                     errors.lastName ? 'border-red-300' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                  } placeholder-gray-500 text-primary-dark rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm`}
                   placeholder="Soyadınız"
                   value={formData.lastName}
                   onChange={handleChange}
@@ -164,7 +164,7 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-primary-dark">
                 E-posta adresi
               </label>
               <input
@@ -173,9 +173,9 @@ const Register = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
                   errors.email ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                } placeholder-gray-500 text-primary-dark rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm`}
                 placeholder="E-posta adresiniz"
                 value={formData.email}
                 onChange={handleChange}
@@ -186,16 +186,16 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="departmentId" className="block text-sm font-medium text-primary-dark">
                 Departman
               </label>
               <select
                 id="departmentId"
                 name="departmentId"
                 required
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
                   errors.departmentId ? 'border-red-300' : 'border-gray-300'
-                } text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                } text-primary-dark rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm`}
                 value={formData.departmentId}
                 onChange={handleChange}
                 disabled={loadingData}
@@ -216,7 +216,7 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-primary-dark">
                 Şifre
               </label>
               <input
@@ -225,9 +225,9 @@ const Register = () => {
                 type="password"
                 autoComplete="new-password"
                 required
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
                   errors.password ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                } placeholder-gray-500 text-primary-dark rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm`}
                 placeholder="Şifreniz"
                 value={formData.password}
                 onChange={handleChange}
@@ -238,7 +238,7 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-primary-dark">
                 Şifre Tekrarı
               </label>
               <input
@@ -247,9 +247,9 @@ const Register = () => {
                 type="password"
                 autoComplete="new-password"
                 required
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
                   errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                } placeholder-gray-500 text-primary-dark rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm`}
                 placeholder="Şifrenizi tekrar giriniz"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -270,7 +270,7 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-red hover:bg-primary-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Kayıt oluşturuluyor...' : 'Kayıt Ol'}
             </button>
@@ -281,7 +281,7 @@ const Register = () => {
               Zaten hesabınız var mı?{' '}
               <Link
                 to="/login"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
+                className="font-medium text-primary-red hover:text-primary-red-700 transition-colors"
               >
                 Giriş yapın
               </Link>

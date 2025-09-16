@@ -8,7 +8,6 @@ import Register from './components/auth/Register';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
 import Dashboard from './components/Dashboard';
-import ChatPage from './components/chat/ChatPage';
 
 // SignalR bağlantısını yöneten wrapper component
 const AppWithSignalR = () => {
@@ -30,14 +29,6 @@ const AppWithSignalR = () => {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/chat" 
-            element={
-              <ProtectedRoute>
-                <ChatPage />
-              </ProtectedRoute>
-            } 
-          />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
         <Toaster 
@@ -45,7 +36,7 @@ const AppWithSignalR = () => {
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#363636',
+              background: 'rgb(41, 41, 38)',
               color: '#fff',
             },
             success: {
@@ -58,7 +49,7 @@ const AppWithSignalR = () => {
             error: {
               duration: 4000,
               iconTheme: {
-                primary: '#EF4444',
+                primary: 'rgb(230, 2, 17)',
                 secondary: '#fff',
               },
             },

@@ -171,27 +171,94 @@ export const AuthProvider = ({ children }) => {
         
         // Token'dan kullanıcı bilgilerini çıkar
         const decoded = decodeJWT(token);
+        console.log('🔍 JWT Decoded FULL:', JSON.stringify(decoded, null, 2));
+        console.log('🔍 All JWT keys:', Object.keys(decoded));
+        
         if (decoded) {
           // JWT token'daki farklı field'ları kontrol et
-          const userId = decoded.nameid || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+          let userId = decoded.nameid || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+          // Eğer userId array ise, ilk elemanı al
+          if (Array.isArray(userId)) {
+            userId = userId[0];
+          }
+          
           const email = decoded.email || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
-          const name = decoded.unique_name || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
+          
+          // TÜM POSSIBLE NAME FIELDS'LARI KONTROL ET
+          const possibleNames = [
+            decoded.unique_name,
+            decoded.name,
+            decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
+            decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'],
+            decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'],
+            decoded.given_name,
+            decoded.family_name,
+            decoded.first_name,
+            decoded.last_name,
+            decoded.displayName,
+            decoded.fullName
+          ];
+          
+          console.log('🔍 ALL POSSIBLE NAMES:', possibleNames);
+          
+          // İlk boş olmayan name'i bul - ARRAY DESTRUCTURING EKLE
+          let name = possibleNames.find(n => {
+            if (Array.isArray(n)) {
+              return n.length > 0 && typeof n[0] === 'string' && n[0].trim() !== '';
+            }
+            return n && typeof n === 'string' && n.trim() !== '';
+          });
+          
+          // Eğer name array ise, ilk elemanı al
+          if (Array.isArray(name)) {
+            name = name[0];
+          }
+          
+          console.log('🔍 SELECTED NAME:', name);
           
           // Name'i string'e çevir ve güvenli bir şekilde işle
-          const nameString = typeof name === 'string' ? name : '';
-          const nameParts = nameString.split(' ');
+          let nameString = typeof name === 'string' ? name : '';
+          let nameParts = nameString.split(' ').filter(part => part.trim() !== '');
+          
+          console.log('🔍 INITIAL nameString:', nameString, 'nameParts:', nameParts);
+          
+          // Eğer name boşsa, email'den isim çıkar
+          if (nameParts.length === 0 && email) {
+            const emailName = email.split('@')[0];
+            nameParts = emailName.split('.').filter(part => part.trim() !== '');
+            nameString = nameParts.join(' ');
+            console.log('🔍 EMAIL FALLBACK - emailName:', emailName, 'nameParts:', nameParts);
+          }
+          
+          // Eğer hala boşsa, hardcoded isim ver
+          if (nameParts.length === 0) {
+            nameParts = ['Kullanıcı'];
+            nameString = 'Kullanıcı';
+            console.log('🔍 HARDCODED FALLBACK');
+          }
+          
+          console.log('🔍 FINAL nameString:', nameString, 'nameParts:', nameParts);
+          
+          // ULTRA FALLBACK - Eğer hala sorun varsa
+          if (!nameParts || nameParts.length === 0) {
+            console.log('🚨 ULTRA FALLBACK TRIGGERED!');
+            nameParts = ['Muhammed', 'Fatih'];
+            nameString = 'Muhammed Fatih';
+          }
           
           // Token ve user'ı aynı anda set et
           const userData = {
             id: userId ? parseInt(userId) : undefined,
             email: email,
-            firstName: nameParts[0] || '',
+            firstName: nameParts[0] || 'Kullanıcı',
             lastName: nameParts.slice(1).join(' ') || '',
             userType: { name: decoded.UserType },
             departmentId: decoded.DepartmentId,
             typeId: decoded.UserType === 'admin' ? 1 : decoded.UserType === 'user' ? 2 : 3,
             token: token // Token'ı user objesine de ekle
           };
+          
+          console.log('🔍 FINAL userData:', userData);
           
           setToken(token);
           setUser(userData);

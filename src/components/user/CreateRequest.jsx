@@ -75,15 +75,15 @@ const CreateRequest = ({ onRequestCreated }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-red"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="bg-white shadow-lg rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Yeni Talep Oluştur</h2>
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-2xl bg-white shadow-lg rounded-lg p-4 sm:p-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-primary-dark mb-6">Yeni Talep Oluştur</h2>
         
         {submitSuccess && (
           <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
@@ -100,7 +100,7 @@ const CreateRequest = ({ onRequestCreated }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Talep Türü */}
           <div>
-            <label htmlFor="requestTypeId" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="requestTypeId" className="block text-sm font-medium text-primary-dark mb-2">
               Talep Türü *
             </label>
             <select
@@ -109,7 +109,7 @@ const CreateRequest = ({ onRequestCreated }) => {
               value={formData.requestTypeId}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
             >
               <option value="">Talep türü seçin</option>
               {requestTypes.map((type) => (
@@ -120,12 +120,9 @@ const CreateRequest = ({ onRequestCreated }) => {
             </select>
           </div>
 
-
-
-
           {/* Açıklama */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-primary-dark mb-2">
               Talep Açıklaması *
             </label>
             <textarea
@@ -136,16 +133,16 @@ const CreateRequest = ({ onRequestCreated }) => {
               required
               rows={6}
               placeholder="Talebinizi detaylı bir şekilde açıklayın..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
             />
           </div>
 
           {/* Ekran Görüntüsü */}
           <div>
-            <label htmlFor="screenshotFile" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="screenshotFile" className="block text-sm font-medium text-primary-dark mb-2">
               Ekran Görüntüsü (Opsiyonel)
             </label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+            <div className="mt-1 flex justify-center px-4 sm:px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-primary-red-300 transition-colors">
               <div className="space-y-1 text-center">
                 <svg
                   className="mx-auto h-12 w-12 text-gray-400"
@@ -161,10 +158,10 @@ const CreateRequest = ({ onRequestCreated }) => {
                     strokeLinejoin="round"
                   />
                 </svg>
-                <div className="flex text-sm text-gray-600">
+                <div className="flex flex-col sm:flex-row text-sm text-gray-600">
                   <label
                     htmlFor="screenshotFile"
-                    className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                    className="relative cursor-pointer bg-white rounded-md font-medium text-primary-red hover:text-primary-red-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-red transition-colors"
                   >
                     <span>Dosya seçin</span>
                     <input
@@ -191,7 +188,7 @@ const CreateRequest = ({ onRequestCreated }) => {
           </div>
 
           {/* Gönder Butonu */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
             <button
               type="button"
               onClick={() => setFormData({
@@ -199,14 +196,14 @@ const CreateRequest = ({ onRequestCreated }) => {
                 description: '',
                 screenshotFile: null
               })}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md text-primary-dark hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red transition-colors"
             >
               Temizle
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-6 py-2 bg-primary-red text-white rounded-md hover:bg-primary-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSubmitting ? 'Gönderiliyor...' : 'Talep Oluştur'}
             </button>
