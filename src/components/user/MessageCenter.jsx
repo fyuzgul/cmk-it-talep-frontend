@@ -450,7 +450,7 @@ const MessageCenter = () => {
 
         {/* Sağ Panel - Chat Benzeri Mesaj Paneli */}
         <div className="lg:col-span-3">
-          <div className="bg-white rounded-lg shadow h-full flex flex-col">
+          <div className="bg-white rounded-lg shadow h-full flex flex-col max-h-[600px]">
             {selectedRequest ? (
               <>
                 {/* Chat Header */}
@@ -471,7 +471,7 @@ const MessageCenter = () => {
                 </div>
 
                 {/* Chat Messages Area */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="overflow-y-auto p-4 space-y-4 h-96 flex-shrink-0">
                   {/* Talep Açıklaması - İlk Mesaj */}
                   <div className="flex justify-start">
                     <div className="max-w-xs lg:max-w-md">
