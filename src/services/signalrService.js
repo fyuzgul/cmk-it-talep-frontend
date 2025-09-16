@@ -193,6 +193,7 @@ class SignalRService {
     if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
       return await this.connection.invoke(methodName, ...args);
     } else {
+      console.warn(`⚠️ SignalR not connected, cannot invoke ${methodName}`);
       throw new Error('SignalR not connected');
     }
   }

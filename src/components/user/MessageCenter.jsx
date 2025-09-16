@@ -121,6 +121,47 @@ const MessageCenter = () => {
     };
   }, []);
 
+  // SignalR mesajlarını dinle - gerçek zamanlı güncelleme
+  useEffect(() => {
+    const handleNewMessage = (message) => {
+      console.log('New message received via SignalR in MessageCenter:', message);
+      
+      // Seçili talep için yeni mesaj geldi
+      if (message.RequestId === selectedRequest?.id) {
+        console.log(`✅ Message for selected request ${selectedRequest.id} received in MessageCenter`);
+        // Cevapları yeniden yükle
+        loadRequestResponses(selectedRequest.id);
+        
+        // User requests listesini de güncelle
+        setUserRequests(prev => 
+          prev.map(req => 
+            req.id === message.RequestId 
+              ? { 
+                  ...req, 
+                  requestResponses: [...(req.requestResponses || []), {
+                    id: Date.now(), // Geçici ID
+                    message: message.Message,
+                    senderId: message.SenderId || message.UserId,
+                    createdDate: message.CreatedDate || message.Timestamp,
+                    isRead: false
+                  }]
+                }
+              : req
+          )
+        );
+      } else {
+        console.log(`ℹ️ Message for different request (${message.RequestId}), current: ${selectedRequest?.id}`);
+      }
+    };
+
+    // SignalR service'ten mesaj dinleme
+    signalrService.on('message:new', handleNewMessage);
+
+    return () => {
+      signalrService.off('message:new', handleNewMessage);
+    };
+  }, [selectedRequest, loadRequestResponses]);
+
 
   // Kullanıcının çevrimiçi olup olmadığını kontrol et
   const isUserOnline = (userId) => {
@@ -188,6 +229,16 @@ const MessageCenter = () => {
     setSelectedRequest(request);
     await loadRequestResponses(request.id);
     
+    // SignalR grubuna katıl
+    if (signalrService.isConnected) {
+      try {
+        await signalrService.joinRoom(`Request_${request.id}`);
+        console.log(`✅ Joined SignalR group: Request_${request.id}`);
+      } catch (error) {
+        console.error('❌ Failed to join SignalR group:', error);
+      }
+    }
+    
     // Tüm konuşmayı okundu işaretle
     try {
       await markConversationAsRead(request.id);
@@ -239,6 +290,30 @@ const MessageCenter = () => {
       };
       
       await createRequestResponse(responseData);
+      
+      // SignalR ile mesajı gönder (gerçek zamanlı güncelleme için)
+      if (signalrService.isConnected) {
+        try {
+          await signalrService.sendMessageToGroup(`Request_${selectedRequest.id}`, {
+            RequestId: selectedRequest.id,
+            Message: responseForm.message.trim(),
+            SenderId: user?.id,
+            UserId: user?.id,
+            SenderName: user?.firstName && user?.lastName 
+              ? `${user.firstName} ${user.lastName}` 
+              : user?.firstName || 'Kullanıcı',
+            CreatedDate: new Date().toISOString(),
+            Timestamp: new Date().toISOString()
+          });
+          console.log('✅ Message sent via SignalR to group Request_' + selectedRequest.id);
+        } catch (signalrError) {
+          console.error('❌ SignalR message send failed:', signalrError);
+          // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
+        }
+      } else {
+        console.warn('⚠️ SignalR not connected, message will not be sent in real-time');
+      }
+      
       setResponseForm({
         message: '',
         filePath: '',

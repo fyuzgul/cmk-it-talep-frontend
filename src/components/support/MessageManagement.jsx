@@ -145,6 +145,7 @@ const MessageManagement = () => {
       
       // Seçili talep için yeni mesaj geldi
       if (message.RequestId === selectedRequest?.id) {
+        console.log(`✅ Message for selected request ${selectedRequest.id} received`);
         // Cevapları yeniden yükle
         loadRequestResponses(selectedRequest.id);
         
@@ -157,14 +158,16 @@ const MessageManagement = () => {
                   requestResponses: [...(req.requestResponses || []), {
                     id: Date.now(), // Geçici ID
                     message: message.Message,
-                    senderId: message.UserId,
-                    createdDate: message.Timestamp,
+                    senderId: message.SenderId || message.UserId,
+                    createdDate: message.CreatedDate || message.Timestamp,
                     isRead: false
                   }]
                 }
               : req
           )
         );
+      } else {
+        console.log(`ℹ️ Message for different request (${message.RequestId}), current: ${selectedRequest?.id}`);
       }
     };
 
@@ -272,6 +275,16 @@ const MessageManagement = () => {
       filePath: ''
     });
     
+    // SignalR grubuna katıl
+    if (signalrService.isConnected) {
+      try {
+        await signalrService.joinRoom(`Request_${request.id}`);
+        console.log(`✅ Joined SignalR group: Request_${request.id}`);
+      } catch (error) {
+        console.error('❌ Failed to join SignalR group:', error);
+      }
+    }
+    
     // Tüm konuşmayı okundu işaretle
     try {
       await markConversationAsRead(request.id);
@@ -326,20 +339,24 @@ const MessageManagement = () => {
       // SignalR ile mesajı gönder (gerçek zamanlı güncelleme için)
       if (signalrService.isConnected) {
         try {
-          await signalrService.sendMessageToGroup(`request_${selectedRequest.id}`, {
+          await signalrService.sendMessageToGroup(`Request_${selectedRequest.id}`, {
             RequestId: selectedRequest.id,
             Message: responseForm.message.trim(),
+            SenderId: user?.id,
             UserId: user?.id,
             SenderName: user?.firstName && user?.lastName 
               ? `${user.firstName} ${user.lastName}` 
               : user?.firstName || 'Destek',
+            CreatedDate: new Date().toISOString(),
             Timestamp: new Date().toISOString()
           });
-          console.log('✅ Message sent via SignalR');
+          console.log('✅ Message sent via SignalR to group Request_' + selectedRequest.id);
         } catch (signalrError) {
           console.error('❌ SignalR message send failed:', signalrError);
           // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
         }
+      } else {
+        console.warn('⚠️ SignalR not connected, message will not be sent in real-time');
       }
       
       setResponseForm({
