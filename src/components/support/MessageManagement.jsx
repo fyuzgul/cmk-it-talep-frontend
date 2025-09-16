@@ -418,28 +418,39 @@ const MessageManagement = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Mesaj Yönetimi</h2>
-        <p className="text-gray-600">Taleplere cevap verin ve mesajları yönetin</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+      <div className="mb-8">
+        <div className="flex items-center space-x-4 mb-4">
+          <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              Mesaj Yönetimi
+            </h2>
+            <p className="text-gray-600 mt-1">Taleplere cevap verin ve mesajları yönetin</p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-180px)] max-h-[calc(100vh-180px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-[calc(100vh-200px)] max-h-[calc(100vh-200px)]">
         {/* Sol Panel - Talep Listesi */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow h-full flex flex-col">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Atanan Talepler</h3>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 h-full flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-gray-200/50 bg-gradient-to-r from-gray-50 to-gray-100/50">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Atanan Talepler</h3>
               
               {/* Filtreler */}
-              <div className="mt-4 space-y-3">
+              <div className="space-y-3">
                 <div>
                   <input
                     type="text"
                     value={filters.search}
                     onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                     placeholder="Talep ara..."
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2 text-sm border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white/80 backdrop-blur-sm shadow-sm transition-all duration-200"
                   />
                 </div>
                 
@@ -447,7 +458,7 @@ const MessageManagement = () => {
                   <select
                     value={filters.statusId}
                     onChange={(e) => setFilters(prev => ({ ...prev, statusId: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2 text-sm border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white/80 backdrop-blur-sm shadow-sm transition-all duration-200"
                   >
                     <option value="">Tüm Durumlar</option>
                     {requestStatuses.map((status) => (
@@ -462,7 +473,7 @@ const MessageManagement = () => {
                   <select
                     value={filters.typeId}
                     onChange={(e) => setFilters(prev => ({ ...prev, typeId: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2 text-sm border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white/80 backdrop-blur-sm shadow-sm transition-all duration-200"
                   >
                     <option value="">Tüm Türler</option>
                     {requestTypes.map((type) => (
@@ -475,66 +486,71 @@ const MessageManagement = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto scrollbar-thin h-96 min-h-0">
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               {filteredRequests.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
-                  <div className="py-8">
-                    <svg className="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-8 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <p className="text-sm">Atanan talep bulunmuyor</p>
                   </div>
+                  <p className="text-gray-500 font-medium">Atanan talep bulunmuyor</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-200">
+                <div className="p-2 space-y-2">
                   {filteredRequests.map((request) => (
                     <div
                       key={request.id}
                       onClick={() => handleRequestSelect(request)}
-                      className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors border-l-4 ${
+                      className={`group p-4 cursor-pointer rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${
                         selectedRequest?.id === request.id 
-                          ? 'bg-indigo-50 border-l-indigo-500 border-r-4 border-r-indigo-500' 
-                          : 'border-l-transparent'
+                          ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 shadow-lg' 
+                          : 'bg-white/60 hover:bg-white/80 border border-gray-200/50'
                       }`}
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="text-sm font-medium text-gray-900 line-clamp-2 flex-1 mr-2">
+                      <div className="flex items-start justify-between mb-3">
+                        <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 flex-1 mr-3">
                           {request.description}
                         </h4>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border flex-shrink-0 ${getStatusBadgeColor(request.requestStatusId)}`}>
+                        <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full shadow-sm ${getStatusBadgeColor(request.requestStatusId)}`}>
                           {getStatusName(request.requestStatusId)}
                         </span>
                       </div>
                       
-                      <div className="text-xs text-gray-500 mb-2 space-y-1">
+                      <div className="space-y-2 text-xs text-gray-600">
                         <div className="flex items-center">
-                          <span className="font-medium text-gray-600">Tür:</span>
-                          <span className="ml-1">{getTypeName(request.requestTypeId)}</span>
+                          <svg className="w-3 h-3 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                          </svg>
+                          {getTypeName(request.requestTypeId)}
                         </div>
                         <div className="flex items-center">
-                          <span className="font-medium text-gray-600">Oluşturan:</span>
-                          <span className="ml-1">{request.requestCreator?.firstName} {request.requestCreator?.lastName}</span>
+                          <svg className="w-3 h-3 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          {request.requestCreator?.firstName} {request.requestCreator?.lastName}
                         </div>
                         <div className="flex items-center">
-                          <span className="font-medium text-gray-600">Tarih:</span>
-                          <span className="ml-1">{formatDate(request.createdDate)}</span>
+                          <svg className="w-3 h-3 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {formatDate(request.createdDate)}
                         </div>
                       </div>
 
-                      <div className="mt-2 flex items-center justify-between">
+                      <div className="mt-3 flex items-center justify-between">
                         {request.requestResponses && request.requestResponses.length > 0 && (
-                          <div className="flex items-center text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full inline-flex">
-                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="flex items-center text-xs text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full font-medium">
+                            <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                             </svg>
                             {request.requestResponses.length} cevap
                           </div>
                         )}
                         
-                        {/* Okunmamış mesaj badge'i */}
                         {getUnreadCount(request) > 0 && (
                           <div className="flex items-center">
-                            <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
+                            <span className="inline-flex items-center justify-center px-2.5 py-1 text-xs font-bold leading-none text-white bg-gradient-to-r from-red-500 to-pink-500 rounded-full shadow-lg">
                               {getUnreadCount(request)}
                             </span>
                           </div>
@@ -550,67 +566,89 @@ const MessageManagement = () => {
 
         {/* Sağ Panel - Mesaj Detayları ve Cevap Formu */}
         <div className="lg:col-span-3">
-          <div className="bg-white rounded-lg shadow h-full flex flex-col max-h-[600px]">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 h-full flex flex-col overflow-hidden max-h-[calc(100vh-200px)]">
             {selectedRequest ? (
               <>
                 {/* Chat Header */}
-                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                <div className="p-6 border-b border-gray-200/50 bg-gradient-to-r from-gray-50 to-gray-100/50">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Talep #{selectedRequest.id}</h3>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadgeColor(selectedRequest.requestStatusId)}`}>
-                          {getStatusName(selectedRequest.requestStatusId)}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {getTypeName(selectedRequest.requestTypeId)}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {formatDate(selectedRequest.createdDate)}
-                        </span>
+                    <div className="flex items-center space-x-4">
+                      <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-md">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">Talep #{selectedRequest.id}</h3>
+                        <div className="flex items-center space-x-3 mt-1">
+                          <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full shadow-sm ${getStatusBadgeColor(selectedRequest.requestStatusId)}`}>
+                            {getStatusName(selectedRequest.requestStatusId)}
+                          </span>
+                          <span className="text-sm text-gray-600 flex items-center">
+                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            {getTypeName(selectedRequest.requestTypeId)}
+                          </span>
+                          <span className="text-sm text-gray-600 flex items-center">
+                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {formatDate(selectedRequest.createdDate)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Chat Messages Area */}
-                <div className="overflow-y-auto p-4 space-y-4 h-96 flex-shrink-0">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 min-h-0" style={{maxHeight: 'calc(100vh - 400px)'}}>
                   {/* Talep Açıklaması - İlk Mesaj */}
                   <div className="flex justify-start">
-                    <div className="max-w-xs lg:max-w-md">
-                      <div className="bg-gray-100 rounded-lg p-3">
-                        <div className="flex items-center mb-2">
+                    <div className="max-w-lg">
+                      <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl p-4 shadow-lg border border-gray-200/50">
+                        <div className="flex items-center mb-3">
                           <div className="relative">
-                            <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            <div className="w-10 h-10 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
                               {selectedRequest.requestCreator?.firstName?.charAt(0) || 'U'}
                             </div>
-                            {/* Çevrimiçi durumu göstergesi */}
                             {isUserOnline(selectedRequest.requestCreator?.id) && (
-                              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                             )}
                           </div>
-                          <div className="ml-2">
+                          <div className="ml-3">
                             <div className="flex items-center space-x-2">
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm font-bold text-gray-900">
                                 {selectedRequest.requestCreator?.firstName} {selectedRequest.requestCreator?.lastName}
                               </p>
                               {isUserOnline(selectedRequest.requestCreator?.id) && (
-                                <span className="text-xs text-green-600 font-medium">Çevrimiçi</span>
+                                <span className="text-xs text-green-600 font-bold bg-green-100 px-2 py-0.5 rounded-full">
+                                  Çevrimiçi
+                                </span>
                               )}
                             </div>
-                            <p className="text-xs text-gray-500">{formatDate(selectedRequest.createdDate)}</p>
+                            <p className="text-xs text-gray-600 flex items-center">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {formatDate(selectedRequest.createdDate)}
+                            </p>
                           </div>
                         </div>
-                        <p className="text-gray-700 text-sm whitespace-pre-wrap">{selectedRequest.description}</p>
+                        <p className="text-gray-800 text-sm whitespace-pre-wrap leading-relaxed">{selectedRequest.description}</p>
                         {selectedRequest.screenshotFilePath && (
-                          <div className="mt-2">
+                          <div className="mt-3">
                             <a 
                               href={selectedRequest.screenshotFilePath} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-indigo-600 hover:text-indigo-800 text-xs"
+                              className="inline-flex items-center px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium hover:bg-indigo-200 transition-colors duration-200"
                             >
-                              📎 Ekran Görüntüsü
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                              </svg>
+                              Ekran Görüntüsü
                             </a>
                           </div>
                         )}
@@ -625,59 +663,82 @@ const MessageManagement = () => {
                     
                     return (
                       <div key={response.id} className={`flex ${isFromSupport ? 'justify-end' : 'justify-start'}`}>
-                        <div className="max-w-xs lg:max-w-md">
+                        <div className="max-w-lg">
                           <div 
-                            className={`rounded-lg p-3 cursor-pointer transition-all duration-200 ${
+                            className={`rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:shadow-lg ${
                               isFromSupport 
-                                ? 'bg-indigo-500 text-white hover:bg-indigo-600' 
-                                : `bg-gray-100 text-gray-900 hover:bg-gray-200 ${!response.isRead ? 'ring-2 ring-blue-400 shadow-lg' : ''}`
+                                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl' 
+                                : `bg-gradient-to-r from-gray-100 to-gray-200 text-gray-900 hover:from-gray-200 hover:to-gray-300 shadow-md ${!response.isRead ? 'ring-2 ring-blue-400 shadow-xl' : ''}`
                             }`}
                             onClick={() => handleMessageClick(response)}
                           >
-                            <div className="flex items-center mb-2">
+                            <div className="flex items-center mb-3">
                               <div className="relative">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                                  isFromSupport ? 'bg-indigo-600 text-white' : 'bg-gray-400 text-white'
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-md ${
+                                  isFromSupport ? 'bg-indigo-600 text-white' : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
                                 }`}>
                                   {isFromSupport ? 'D' : (isFromCurrentUser ? 'S' : 'U')}
                                 </div>
-                                {/* Çevrimiçi durumu göstergesi */}
                                 {!isFromSupport && isUserOnline(response.senderId) && (
-                                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                                 )}
                               </div>
-                              <div className="ml-2">
+                              <div className="ml-3">
                                 <div className="flex items-center space-x-2">
-                                  <p className={`text-sm font-medium ${isFromSupport ? 'text-white' : 'text-gray-900'}`}>
+                                  <p className={`text-sm font-bold ${isFromSupport ? 'text-white' : 'text-gray-900'}`}>
                                     {isFromSupport ? 'Destek' : (isFromCurrentUser ? 'Sen' : 'Kullanıcı')}
                                   </p>
                                   {!isFromSupport && isUserOnline(response.senderId) && (
-                                    <span className="text-xs text-green-600 font-medium">Çevrimiçi</span>
+                                    <span className="text-xs text-green-600 font-bold bg-green-100 px-2 py-0.5 rounded-full">
+                                      Çevrimiçi
+                                    </span>
                                   )}
                                 </div>
-                                <p className={`text-xs ${isFromSupport ? 'text-indigo-200' : 'text-gray-500'}`}>
+                                <p className={`text-xs flex items-center ${isFromSupport ? 'text-indigo-200' : 'text-gray-600'}`}>
+                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
                                   {formatDate(response.createdDate)}
                                 </p>
                               </div>
                             </div>
-                            <p className={`text-sm whitespace-pre-wrap ${isFromSupport ? 'text-white' : 'text-gray-700'}`}>
+                            <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isFromSupport ? 'text-white' : 'text-gray-800'}`}>
                               {response.message}
                             </p>
                             {response.filePath && (
-                              <div className="mt-2">
+                              <div className="mt-3">
                                 <a 
                                   href={response.filePath} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
-                                  className={`text-xs hover:underline ${isFromSupport ? 'text-indigo-200 hover:text-white' : 'text-indigo-600 hover:text-indigo-800'}`}
+                                  className={`inline-flex items-center px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200 ${
+                                    isFromSupport 
+                                      ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                                      : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                                  }`}
                                 >
-                                  📎 Ek dosya
+                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                  </svg>
+                                  Ek dosya
                                 </a>
                               </div>
                             )}
-                            <div className="flex items-center justify-between mt-2">
-                              <div className={`text-xs ${isFromSupport ? 'text-indigo-200' : 'text-gray-500'}`}>
-                                {response.isRead ? '✓ Okundu' : '• Okunmadı'}
+                            <div className="flex items-center justify-between mt-3">
+                              <div className={`text-xs font-medium ${isFromSupport ? 'text-indigo-200' : 'text-gray-600'}`}>
+                                {response.isRead ? (
+                                  <span className="flex items-center">
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Okundu
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+                                    Okunmadı
+                                  </span>
+                                )}
                               </div>
                               {response.readAt && (
                                 <div className={`text-xs ${isFromSupport ? 'text-indigo-200' : 'text-gray-500'}`}>
@@ -696,26 +757,41 @@ const MessageManagement = () => {
                 </div>
 
                 {/* Chat Input Area */}
-                <div className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-                  <div className="space-y-3">
+                <div className="p-6 border-t border-gray-200/50 bg-gradient-to-r from-gray-50 to-gray-100/50 flex-shrink-0">
+                  <div className="space-y-4">
                     {/* Mesaj Input */}
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-3">
                       <div className="flex-1">
                         <textarea
                           value={responseForm.message}
                           onChange={(e) => setResponseForm({...responseForm, message: e.target.value})}
                           onKeyPress={handleKeyPress}
                           rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 resize-none text-sm"
+                          className="w-full px-4 py-3 border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none text-sm bg-white/80 backdrop-blur-sm shadow-sm transition-all duration-200"
                           placeholder="Cevabınızı yazın... (Enter ile gönder, Shift+Enter ile yeni satır)"
                         />
                       </div>
                       <button
                         onClick={handleAddResponse}
                         disabled={!responseForm.message.trim() || responseLoading}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none"
                       >
-                        {responseLoading ? 'Gönderiliyor...' : 'Gönder'}
+                        {responseLoading ? (
+                          <div className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Gönderiliyor...
+                          </div>
+                        ) : (
+                          <div className="flex items-center">
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                            Gönder
+                          </div>
+                        )}
                       </button>
                     </div>
 
@@ -725,7 +801,7 @@ const MessageManagement = () => {
                         type="text"
                         value={responseForm.filePath}
                         onChange={(e) => setResponseForm({...responseForm, filePath: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                        className="w-full px-4 py-3 border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white/80 backdrop-blur-sm shadow-sm transition-all duration-200"
                         placeholder="Dosya yolu (opsiyonel)..."
                       />
                     </div>
@@ -733,13 +809,15 @@ const MessageManagement = () => {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-500">
-                <div className="text-center">
-                  <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  <p className="text-lg">Görüntülemek için bir talep seçin</p>
-                  <p className="text-sm text-gray-400 mt-2">Sol panelden bir talep seçerek mesajlaşmaya başlayın</p>
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center p-8">
+                  <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center shadow-lg">
+                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-700 mb-2">Görüntülemek için bir talep seçin</h3>
+                  <p className="text-gray-500">Sol panelden bir talep seçerek mesajlaşmaya başlayın</p>
                 </div>
               </div>
             )}

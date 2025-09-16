@@ -90,15 +90,15 @@ const ResetPassword = () => {
 
   if (!formData.email) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-6">
           <div className="text-center">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
               <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            <h2 className="mt-6 text-center text-2xl sm:text-3xl font-extrabold text-primary-dark">
               Geçersiz bağlantı
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
@@ -107,7 +107,7 @@ const ResetPassword = () => {
             <div className="mt-6">
               <Link
                 to="/forgot-password"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
+                className="font-medium text-primary-red hover:text-primary-red-700 transition-colors"
               >
                 Yeni şifre sıfırlama isteği gönder
               </Link>
@@ -119,10 +119,10 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-6">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-2xl sm:text-3xl font-extrabold text-primary-dark">
             Yeni şifre oluşturun
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
@@ -132,10 +132,10 @@ const ResetPassword = () => {
             E-posta adresinize gönderilen kodu giriniz
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="token" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="token" className="block text-sm font-medium text-primary-dark">
                 E-posta ile Gönderilen Kod
               </label>
               <input
@@ -143,9 +143,9 @@ const ResetPassword = () => {
                 name="token"
                 type="text"
                 required
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
                   errors.token ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                } placeholder-gray-500 text-primary-dark rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm`}
                 placeholder="E-posta ile gönderilen kodu giriniz"
                 value={formData.token}
                 onChange={handleChange}
@@ -156,7 +156,7 @@ const ResetPassword = () => {
             </div>
             
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="newPassword" className="block text-sm font-medium text-primary-dark">
                 Yeni Şifre
               </label>
               <input
@@ -165,9 +165,9 @@ const ResetPassword = () => {
                 type="password"
                 autoComplete="new-password"
                 required
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
                   errors.newPassword ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                } placeholder-gray-500 text-primary-dark rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm`}
                 placeholder="Yeni şifreniz"
                 value={formData.newPassword}
                 onChange={handleChange}
@@ -178,7 +178,7 @@ const ResetPassword = () => {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-primary-dark">
                 Şifre Tekrarı
               </label>
               <input
@@ -187,9 +187,9 @@ const ResetPassword = () => {
                 type="password"
                 autoComplete="new-password"
                 required
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-3 border ${
                   errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                } placeholder-gray-500 text-primary-dark rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm`}
                 placeholder="Şifrenizi tekrar giriniz"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -210,7 +210,7 @@ const ResetPassword = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-red hover:bg-primary-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Şifre sıfırlanıyor...' : 'Şifreyi Sıfırla'}
             </button>
@@ -219,7 +219,7 @@ const ResetPassword = () => {
           <div className="text-center">
             <Link
               to="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-primary-red hover:text-primary-red-700 transition-colors"
             >
               Giriş sayfasına dön
             </Link>
