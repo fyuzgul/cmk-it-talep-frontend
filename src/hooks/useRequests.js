@@ -4,7 +4,6 @@ import { requestService } from '../services/requestService';
 export const useRequests = () => {
   const [requestTypes, setRequestTypes] = useState([]);
   const [requestStatuses, setRequestStatuses] = useState([]);
-  const [requestResponseTypes, setRequestResponseTypes] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -133,71 +132,10 @@ export const useRequests = () => {
     }
   };
 
-  // Request Response Types
-  const fetchRequestResponseTypes = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await requestService.getRequestResponseTypes();
-      setRequestResponseTypes(data);
-      return data;
-    } catch (err) {
-      setError(err.response?.data?.message || 'Talep/İstek türleri yüklenirken bir hata oluştu');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createRequestResponseType = async (typeData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await requestService.createRequestResponseType(typeData);
-      await fetchRequestResponseTypes(); // Refresh the list
-      return result;
-    } catch (err) {
-      setError(err.response?.data?.message || 'Talep/İstek türü oluşturulurken bir hata oluştu');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateRequestResponseType = async (id, typeData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await requestService.updateRequestResponseType(id, typeData);
-      await fetchRequestResponseTypes(); // Refresh the list
-      return result;
-    } catch (err) {
-      setError(err.response?.data?.message || 'Talep/İstek türü güncellenirken bir hata oluştu');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteRequestResponseType = async (id) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await requestService.deleteRequestResponseType(id);
-      await fetchRequestResponseTypes(); // Refresh the list
-      return result;
-    } catch (err) {
-      setError(err.response?.data?.message || 'Talep/İstek türü silinirken bir hata oluştu');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Request Management
   const fetchRequests = useCallback(async (params = {}) => {
     try {
-      setLoading(true);
       setError(null);
       const data = await requestService.getRequests(params);
       setRequests(data);
@@ -206,8 +144,6 @@ export const useRequests = () => {
       console.error('Error fetching requests:', err);
       setError(err.response?.data?.message || 'Talepler yüklenirken bir hata oluştu');
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -273,7 +209,6 @@ export const useRequests = () => {
   // Get requests by creator
   const getRequestsByCreator = useCallback(async (requestCreatorId) => {
     try {
-      setLoading(true);
       setError(null);
       const data = await requestService.getRequestsByCreator(requestCreatorId);
       setRequests(data);
@@ -282,8 +217,6 @@ export const useRequests = () => {
       console.error('Error fetching requests by creator:', err);
       setError(err.response?.data?.message || 'Kullanıcı talepleri yüklenirken bir hata oluştu');
       throw err;
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -295,8 +228,7 @@ export const useRequests = () => {
         setError(null);
         await Promise.all([
           fetchRequestTypes(),
-          fetchRequestStatuses(),
-          fetchRequestResponseTypes()
+          fetchRequestStatuses()
         ]);
       } catch (err) {
         setError(err.response?.data?.message || 'Veriler yüklenirken bir hata oluştu');
@@ -323,12 +255,6 @@ export const useRequests = () => {
     updateRequestStatus,
     deleteRequestStatus,
     
-    // Request Response Types
-    requestResponseTypes,
-    fetchRequestResponseTypes,
-    createRequestResponseType,
-    updateRequestResponseType,
-    deleteRequestResponseType,
     
     // Request Management
     requests,

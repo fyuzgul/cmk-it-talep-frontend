@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalR Debug Test</title>
+    <script src="https://unpkg.com/@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .status { padding: 15px; margin: 10px 0; border-radius: 5px; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { padding: 12px 24px; margin: 8px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log-container { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; height: 500px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; }
+        .log-entry { margin: 2px 0; padding: 2px 5px; }
+        .log-info { color: #0c5460; }
+        .log-success { color: #155724; background-color: #d4edda; }
+        .log-error { color: #721c24; background-color: #f8d7da; }
+        .log-warning { color: #856404; background-color: #fff3cd; }
+        .input-group { margin: 10px 0; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 SignalR Debug Test</h1>
+        
+        <div class="grid">
+            <div>
+                <h3>Test Kontrolleri</h3>
+                <div class="input-group">
+                    <label>JWT Token (opsiyonel):</label>
+                    <input type="text" id="tokenInput" placeholder="JWT token girin veya boş bırakın">
+                </div>
+                
+                <button onclick="testProxyConnection()">1. Proxy Bağlantı Testi (Önerilen)</button>
+                <button onclick="testDirectConnection()">2. Direkt Bağlantı Testi</button>
+                <button onclick="testWithToken()">3. Token ile Test</button>
+                <button onclick="testWithoutToken()">4. Token Olmadan Test</button>
+                <button onclick="clearLog()">Logları Temizle</button>
+                <button onclick="disconnect()">Bağlantıyı Kes</button>
+            </div>
+            
+            <div>
+                <h3>Bağlantı Durumu</h3>
+                <div id="connectionStatus" class="status info">Bağlantı bekleniyor...</div>
+                
+                <h3>Test Sonuçları</h3>
+                <div id="testResults" class="status info">Test yapılmadı</div>
+            </div>
+        </div>
+
+        <h3>Detaylı Loglar</h3>
+        <div id="log" class="log-container"></div>
+    </div>
+
+    <script>
+        let connection = null;
+        let currentTest = '';
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function updateConnectionStatus(message, type) {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function updateTestResults(message, type) {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.textContent = message;
+            resultsDiv.className = `status ${type}`;
+        }
+
+        async function createConnection(url, token = null) {
+            log(`🔄 Bağlantı oluşturuluyor: ${url}`, 'info');
+            log(`🔑 Token: ${token ? 'Mevcut' : 'Yok'}`, 'info');
+            
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl(url, {
+                    accessTokenFactory: () => {
+                        log(`🔑 Token gönderiliyor: ${token ? 'Mevcut' : 'Yok'}`, 'info');
+                        return token || '';
+                    },
+                    skipNegotiation: false,
+                    transport: signalR.HttpTransportType.WebSockets,
+                    withCredentials: true
+                })
+                .withAutomaticReconnect([0, 2000, 10000, 30000])
+                .build();
+
+            // Event listeners
+            connection.onclose((error) => {
+                log(`❌ Bağlantı kapatıldı: ${error || 'Bilinmeyen hata'}`, 'error');
+                updateConnectionStatus('Bağlantı kesildi', 'error');
+            });
+
+            connection.onreconnecting((error) => {
+                log(`🔄 Yeniden bağlanıyor: ${error}`, 'warning');
+                updateConnectionStatus('Yeniden bağlanıyor...', 'warning');
+            });
+
+            connection.onreconnected((connectionId) => {
+                log(`✅ Yeniden bağlandı: ${connectionId}`, 'success');
+                updateConnectionStatus('Bağlı', 'success');
+            });
+
+            // Test event listeners
+            connection.on("ReceiveMessage", (message) => {
+                log(`💬 Mesaj alındı: ${JSON.stringify(message)}`, 'success');
+            });
+
+            connection.on("UserOnline", (userId) => {
+                log(`🟢 Kullanıcı çevrimiçi: ${userId}`, 'success');
+            });
+
+            connection.on("UserOffline", (userId) => {
+                log(`🔴 Kullanıcı çevrimdışı: ${userId}`, 'info');
+            });
+
+            connection.on("OnlineUsers", (users) => {
+                log(`👥 Çevrimiçi kullanıcılar: ${JSON.stringify(users)}`, 'success');
+            });
+
+            return connection;
+        }
+
+        async function testDirectConnection() {
+            currentTest = 'Direct Connection';
+            log('🧪 Direkt bağlantı testi başlatılıyor...', 'info');
+            updateTestResults('Direkt bağlantı testi çalışıyor...', 'warning');
+            
+            try {
+                await disconnect();
+                
+                const token = document.getElementById('tokenInput').value || localStorage.getItem('token');
+                const url = 'https://localhost:7097/messageHub';
+                
+                connection = await createConnection(url, token);
+                await connection.start();
+                
+                log('✅ Direkt bağlantı başarılı!', 'success');
+                updateConnectionStatus('Bağlı (Direkt)', 'success');
+                updateTestResults('Direkt bağlantı başarılı!', 'success');
+                
+            } catch (error) {
+                log(`❌ Direkt bağlantı hatası: ${error.message}`, 'error');
+                log(`❌ Hata detayları: ${JSON.stringify(error)}`, 'error');
+                updateConnectionStatus('Direkt bağlantı hatası', 'error');
+                updateTestResults(`Direkt bağlantı hatası: ${error.message}`, 'error');
+            }
+        }
+
+        async function testProxyConnection() {
+            currentTest = 'Proxy Connection';
+            log('🧪 Proxy bağlantı testi başlatılıyor...', 'info');
+            updateTestResults('Proxy bağlantı testi çalışıyor...', 'warning');
+            
+            try {
+                await disconnect();
+                
+                const token = document.getElementById('tokenInput').value || localStorage.getItem('token');
+                const url = '/messageHub';
+                
+                connection = await createConnection(url, token);
+                await connection.start();
+                
+                log('✅ Proxy bağlantı başarılı!', 'success');
+                updateConnectionStatus('Bağlı (Proxy)', 'success');
+                updateTestResults('Proxy bağlantı başarılı!', 'success');
+                
+            } catch (error) {
+                log(`❌ Proxy bağlantı hatası: ${error.message}`, 'error');
+                log(`❌ Hata detayları: ${JSON.stringify(error)}`, 'error');
+                updateConnectionStatus('Proxy bağlantı hatası', 'error');
+                updateTestResults(`Proxy bağlantı hatası: ${error.message}`, 'error');
+            }
+        }
+
+        async function testWithToken() {
+            currentTest = 'With Token';
+            log('🧪 Token ile bağlantı testi başlatılıyor...', 'info');
+            updateTestResults('Token ile test çalışıyor...', 'warning');
+            
+            const token = document.getElementById('tokenInput').value || localStorage.getItem('token');
+            if (!token) {
+                log('❌ Token bulunamadı! Lütfen token girin veya giriş yapın.', 'error');
+                updateTestResults('Token bulunamadı!', 'error');
+                return;
+            }
+            
+            try {
+                await disconnect();
+                
+                const url = '/messageHub';
+                connection = await createConnection(url, token);
+                await connection.start();
+                
+                log('✅ Token ile bağlantı başarılı!', 'success');
+                updateConnectionStatus('Bağlı (Token)', 'success');
+                updateTestResults('Token ile bağlantı başarılı!', 'success');
+                
+            } catch (error) {
+                log(`❌ Token ile bağlantı hatası: ${error.message}`, 'error');
+                log(`❌ Hata detayları: ${JSON.stringify(error)}`, 'error');
+                updateConnectionStatus('Token ile bağlantı hatası', 'error');
+                updateTestResults(`Token ile bağlantı hatası: ${error.message}`, 'error');
+            }
+        }
+
+        async function testWithoutToken() {
+            currentTest = 'Without Token';
+            log('🧪 Token olmadan bağlantı testi başlatılıyor...', 'info');
+            updateTestResults('Token olmadan test çalışıyor...', 'warning');
+            
+            try {
+                await disconnect();
+                
+                const url = '/messageHub';
+                connection = await createConnection(url, null);
+                await connection.start();
+                
+                log('✅ Token olmadan bağlantı başarılı!', 'success');
+                updateConnectionStatus('Bağlı (Token Yok)', 'success');
+                updateTestResults('Token olmadan bağlantı başarılı!', 'success');
+                
+            } catch (error) {
+                log(`❌ Token olmadan bağlantı hatası: ${error.message}`, 'error');
+                log(`❌ Hata detayları: ${JSON.stringify(error)}`, 'error');
+                updateConnectionStatus('Token olmadan bağlantı hatası', 'error');
+                updateTestResults(`Token olmadan bağlantı hatası: ${error.message}`, 'error');
+            }
+        }
+
+        async function disconnect() {
+            if (connection) {
+                log('🔌 Bağlantı kapatılıyor...', 'info');
+                try {
+                    await connection.stop();
+                } catch (error) {
+                    log(`⚠️ Bağlantı kapatma hatası: ${error.message}`, 'warning');
+                }
+                connection = null;
+                updateConnectionStatus('Bağlantı kesildi', 'info');
+            }
+        }
+
+        // Sayfa yüklendiğinde
+        window.addEventListener('load', () => {
+            log('🚀 SignalR Debug Test Sayfası yüklendi', 'info');
+            log('💡 Test etmek için yukarıdaki butonları kullanın', 'info');
+            log('🔍 Browser Developer Tools Console\'u da kontrol edin', 'info');
+        });
+    </script>
+</body>
+</html>

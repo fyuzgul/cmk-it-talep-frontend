@@ -5,7 +5,6 @@ const RequestFilters = ({
   onFilterChange,
   requestTypes,
   requestStatuses,
-  requestResponseTypes,
   users
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -145,11 +144,6 @@ const RequestFilters = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="">Tümü</option>
-                {requestResponseTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
               </select>
             </div>
 

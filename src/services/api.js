@@ -28,8 +28,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Token süresi dolmuş veya geçersiz
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Sadece login sayfasında değilsek yönlendir
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -78,25 +82,6 @@ export const commonAPI = {
     return response.data;
   },
 
-  getRequestResponseTypes: async () => {
-    const response = await api.get('/RequestResponseType');
-    return response.data;
-  },
-
-  createRequestResponseType: async (typeData) => {
-    const response = await api.post('/RequestResponseType', typeData);
-    return response.data;
-  },
-
-  updateRequestResponseType: async (id, typeData) => {
-    const response = await api.put(`/RequestResponseType/${id}`, typeData);
-    return response.data;
-  },
-
-  deleteRequestResponseType: async (id) => {
-    const response = await api.delete(`/RequestResponseType/${id}`);
-    return response.data;
-  },
 
   getRequestStatuses: async () => {
     const response = await api.get('/RequestStatus');

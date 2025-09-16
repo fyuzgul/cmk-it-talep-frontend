@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRequests } from '../../hooks/useRequests';
+import signalrService from '../../services/signalrService';
 
 const MyRequests = () => {
   const { user } = useAuth();
@@ -8,18 +9,22 @@ const MyRequests = () => {
     requests, 
     requestTypes, 
     requestStatuses, 
-    requestResponseTypes,
     getRequestsByCreator, 
     loading, 
     error 
   } = useRequests();
 
   const [filteredRequests, setFilteredRequests] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const [filters, setFilters] = useState({
     status: '',
     type: '',
     search: ''
   });
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
 
   const loadUserRequests = useCallback(async () => {
     if (user?.id) {
@@ -30,6 +35,56 @@ const MyRequests = () => {
   useEffect(() => {
     loadUserRequests();
   }, [loadUserRequests]);
+
+  // Çevrimiçi kullanıcıları takip et - global state kullan
+  useEffect(() => {
+    // Global online users state'ini al
+    setOnlineUsers(signalrService.getOnlineUsersList());
+    
+    // SignalR bağlantısı kontrolü
+    if (signalrService.isConnected) {
+      console.log('🔵 MyRequests - SignalR connected, waiting for online users...');
+    } else {
+      console.log('❌ MyRequests - SignalR not connected');
+    }
+
+    // Global state değişikliklerini dinle
+    const handleOnlineUsersChange = () => {
+      setOnlineUsers(signalrService.getOnlineUsersList());
+    };
+
+    // Event listeners'ı kaydet
+    signalrService.on('user:online', handleOnlineUsersChange);
+    signalrService.on('user:offline', handleOnlineUsersChange);
+    signalrService.on('online:users', handleOnlineUsersChange);
+
+    // Cleanup
+    return () => {
+      signalrService.off('user:online', handleOnlineUsersChange);
+      signalrService.off('user:offline', handleOnlineUsersChange);
+      signalrService.off('online:users', handleOnlineUsersChange);
+    };
+  }, []);
+
+  // Mesajlaşma için SignalR event listeners
+  useEffect(() => {
+    const handleNewMessage = (message) => {
+      console.log('New message received in MyRequests:', message);
+      if (message.RequestId === selectedRequest?.id) {
+        setMessages(prev => [...prev, message]);
+      }
+    };
+
+    if (showChatModal && signalrService.isConnected) {
+      signalrService.on('message:new', handleNewMessage);
+    }
+
+    return () => {
+      if (signalrService.isConnected) {
+        signalrService.off('message:new', handleNewMessage);
+      }
+    };
+  }, [showChatModal, selectedRequest?.id]);
 
   useEffect(() => {
     let filtered = requests;
@@ -74,6 +129,61 @@ const MyRequests = () => {
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Kullanıcının çevrimiçi olup olmadığını kontrol et
+  const isUserOnline = (userId) => {
+    const isOnline = onlineUsers.includes(userId);
+    console.log(`🔍 MyRequests - isUserOnline(${userId}): ${isOnline}, onlineUsers:`, onlineUsers);
+    return isOnline;
+  };
+
+  // Mesajlaşma fonksiyonları
+  const handleOpenChat = (request) => {
+    setSelectedRequest(request);
+    setShowChatModal(true);
+    setMessages([]);
+    setNewMessage('');
+    
+    // SignalR ile odaya katıl
+    if (signalrService.isConnected) {
+      signalrService.joinRoom(`request_${request.id}`);
+    }
+  };
+
+  const handleCloseChat = () => {
+    if (selectedRequest && signalrService.isConnected) {
+      signalrService.leaveRoom(`request_${selectedRequest.id}`);
+    }
+    setShowChatModal(false);
+    setSelectedRequest(null);
+    setMessages([]);
+    setNewMessage('');
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedRequest) return;
+
+    try {
+      // SignalR ile mesaj gönder
+      if (signalrService.isConnected) {
+        await signalrService.sendMessageToGroup(`request_${selectedRequest.id}`, {
+          RequestId: selectedRequest.id,
+          Message: newMessage.trim(),
+          UserId: user?.id,
+          SenderName: user?.firstName && user?.lastName 
+            ? `${user.firstName} ${user.lastName}` 
+            : user?.firstName || 'Kullanıcı',
+          Timestamp: new Date().toISOString()
+        });
+        
+        setNewMessage('');
+        console.log('✅ Message sent via SignalR');
+      }
+    } catch (error) {
+      console.error('❌ Error sending message:', error);
     }
   };
 
@@ -213,6 +323,12 @@ const MyRequests = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Son Güncelleme
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Destek Sağlayıcısı
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    İşlemler
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -236,6 +352,46 @@ const MyRequests = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(request.modifiedDate)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {request.supportProvider ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="relative">
+                            <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                              {request.supportProvider.firstName?.charAt(0) || 'D'}
+                            </div>
+                            {/* Çevrimiçi durumu göstergesi */}
+                            {isUserOnline(request.supportProvider.id) && (
+                              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-1">
+                              <span className="font-medium">
+                                {request.supportProvider.firstName} {request.supportProvider.lastName}
+                              </span>
+                              {isUserOnline(request.supportProvider.id) && (
+                                <span className="text-xs text-green-600 font-medium">Çevrimiçi</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 italic">Atanmamış</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {request.supportProvider && (
+                        <button
+                          onClick={() => handleOpenChat(request)}
+                          className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                          Mesajlaş
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -308,6 +464,90 @@ const MyRequests = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Mesajlaşma Modal */}
+      {showChatModal && selectedRequest && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Talep #{selectedRequest.id} - Mesajlaşma
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {selectedRequest.supportProvider?.firstName} {selectedRequest.supportProvider?.lastName} ile mesajlaşın
+                  </p>
+                </div>
+                <button
+                  onClick={handleCloseChat}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Messages Area */}
+              <div className="h-96 overflow-y-auto p-4 space-y-4 border-b border-gray-200">
+                {messages.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    Henüz mesaj yok. İlk mesajı siz gönderin!
+                  </div>
+                ) : (
+                  messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={`flex ${message.UserId === user?.id ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                          message.UserId === user?.id
+                            ? 'bg-indigo-500 text-white'
+                            : 'bg-gray-200 text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="font-medium text-sm">
+                            {message.SenderName || 'Bilinmeyen'}
+                          </span>
+                          <span className="text-xs opacity-75">
+                            {new Date(message.Timestamp).toLocaleTimeString('tr-TR', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-sm">{message.Message}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Message Input */}
+              <form onSubmit={handleSendMessage} className="mt-4 flex space-x-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Mesajınızı yazın..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <button
+                  type="submit"
+                  disabled={!newMessage.trim()}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Gönder
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}

@@ -25,4 +25,22 @@ export const userService = {
     const response = await api.get('/UserType');
     return response.data;
   },
+
+  // Mesajlaşma için ek metodlar
+  getAllUsers: async () => {
+    const response = await api.get('/User');
+    return response.data;
+  },
+
+  getUserById: async (id) => {
+    const response = await api.get(`/User/${id}`);
+    return response.data;
+  },
+
+  getUsersByIds: async (ids) => {
+    const response = await api.post('/User/GetByIds', { ids });
+    return response.data;
+  },
 };
+
+export default userService;

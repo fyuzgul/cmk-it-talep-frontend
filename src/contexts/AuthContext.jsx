@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
+import signalrService from '../services/signalrService';
 
 const AuthContext = createContext();
 
@@ -11,18 +12,148 @@ export const useAuth = () => {
   return context;
 };
 
+// JWT token decode fonksiyonu
+const decodeJWT = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error decoding JWT:', error);
+    return null;
+  }
+};
+
+// Token süresini kontrol et
+const isTokenExpired = (token) => {
+  try {
+    const decoded = decodeJWT(token);
+    if (!decoded || !decoded.exp) return true;
+    
+    const currentTime = Math.floor(Date.now() / 1000);
+    return decoded.exp < currentTime;
+  } catch (error) {
+    console.error('Error checking token expiration:', error);
+    return true;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Error boundary için error handler
+  const handleError = (error, errorInfo) => {
+    console.error('AuthProvider Error:', error, errorInfo);
+    setError(error.message || 'Bir hata oluştu');
+  };
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      // You might want to validate the token with the backend
-      setUser({ token });
-    }
-    setLoading(false);
+    const initializeAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          // Token süresini kontrol et
+          if (isTokenExpired(token)) {
+            localStorage.removeItem('token');
+            setLoading(false);
+            return;
+          }
+          
+          // Token'dan kullanıcı bilgilerini çıkar
+          const decoded = decodeJWT(token);
+          console.log('🔑 AuthContext - Decoded token:', decoded);
+          
+          if (decoded) {
+            // JWT token'daki farklı field'ları kontrol et
+            const userId = decoded.nameid || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+            const email = decoded.email || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
+            const name = decoded.unique_name || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
+            
+            console.log('🔑 AuthContext - User ID from token:', userId);
+            console.log('🔑 AuthContext - Email from token:', email);
+            console.log('🔑 AuthContext - Name from token:', name, 'Type:', typeof name);
+            console.log('🔑 AuthContext - All claims:', Object.keys(decoded));
+            
+            // Name'i string'e çevir ve güvenli bir şekilde işle
+            const nameString = typeof name === 'string' ? name : '';
+            const nameParts = nameString.split(' ');
+            
+            // Token ve user'ı aynı anda set et
+            const userData = {
+              id: userId ? parseInt(userId) : undefined,
+              email: email,
+              firstName: nameParts[0] || '',
+              lastName: nameParts.slice(1).join(' ') || '',
+              userType: { name: decoded.UserType },
+              departmentId: decoded.DepartmentId,
+              typeId: decoded.UserType === 'admin' ? 1 : decoded.UserType === 'user' ? 2 : 3,
+              token: token // Token'ı user objesine de ekle
+            };
+            
+            console.log('🔑 AuthContext - User data created:', userData);
+            setToken(token);
+            setUser(userData);
+            
+            // SignalR bağlantısını başlat
+            try {
+              if (!signalrService.isConnected) {
+                await signalrService.connect(token);
+                console.log('✅ SignalR connected on app start');
+              } else {
+                console.log('✅ SignalR already connected on app start');
+              }
+            } catch (error) {
+              console.error('❌ SignalR connection failed on app start:', error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('AuthContext useEffect error:', error);
+        handleError(error);
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
+  }, []);
+
+  // SignalR event listeners - global olarak dinle
+  useEffect(() => {
+    const handleUserOnline = (data) => {
+      console.log('🟢 AuthContext - User online:', data);
+      // Global online users state'ini güncelle
+      signalrService.onlineUsers.push(data.userId);
+    };
+
+    const handleUserOffline = (data) => {
+      console.log('🔴 AuthContext - User offline:', data);
+      // Global online users state'ini güncelle
+      signalrService.onlineUsers = signalrService.onlineUsers.filter(id => id !== data.userId);
+    };
+
+    const handleOnlineUsers = (userIds) => {
+      console.log('👥 AuthContext - Online users received:', userIds);
+      // Global online users state'ini güncelle
+      signalrService.onlineUsers = userIds;
+    };
+
+    // Event listeners'ı kaydet
+    signalrService.on('user:online', handleUserOnline);
+    signalrService.on('user:offline', handleUserOffline);
+    signalrService.on('online:users', handleOnlineUsers);
+
+    // Cleanup
+    return () => {
+      signalrService.off('user:online', handleUserOnline);
+      signalrService.off('user:offline', handleUserOffline);
+      signalrService.off('online:users', handleOnlineUsers);
+    };
   }, []);
 
   const login = async (credentials) => {
@@ -31,25 +162,63 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const response = await authAPI.login(credentials);
       
-      // Backend'den token gelmiyor, sadece kullanıcı bilgileri geliyor
-      if (response && response.id) {
-        // Token olmadığı için basit bir session ID oluşturuyoruz
-        const sessionToken = `session_${Date.now()}_${response.id}`;
-        localStorage.setItem('token', sessionToken);
-        setUser({ 
-          token: sessionToken, 
-          id: response.id,
-          firstName: response.firstName,
-          lastName: response.lastName,
-          email: response.email,
-          departmentId: response.departmentId,
-          typeId: response.typeId,
-          department: response.department,
-          userType: response.userType
-        });
-        return { success: true };
+      // Backend'den JWT token geliyor
+      if (response && response.token) {
+        const token = response.token;
+        
+        // Token'ı localStorage'a kaydet
+        localStorage.setItem('token', token);
+        
+        // Token'dan kullanıcı bilgilerini çıkar
+        const decoded = decodeJWT(token);
+        if (decoded) {
+          // JWT token'daki farklı field'ları kontrol et
+          const userId = decoded.nameid || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+          const email = decoded.email || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
+          const name = decoded.unique_name || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
+          
+          // Name'i string'e çevir ve güvenli bir şekilde işle
+          const nameString = typeof name === 'string' ? name : '';
+          const nameParts = nameString.split(' ');
+          
+          // Token ve user'ı aynı anda set et
+          const userData = {
+            id: userId ? parseInt(userId) : undefined,
+            email: email,
+            firstName: nameParts[0] || '',
+            lastName: nameParts.slice(1).join(' ') || '',
+            userType: { name: decoded.UserType },
+            departmentId: decoded.DepartmentId,
+            typeId: decoded.UserType === 'admin' ? 1 : decoded.UserType === 'user' ? 2 : 3,
+            token: token // Token'ı user objesine de ekle
+          };
+          
+          setToken(token);
+          setUser(userData);
+          
+          // SignalR bağlantısını başlat
+          try {
+            if (!signalrService.isConnected) {
+              await signalrService.connect(token);
+              console.log('✅ SignalR connected on login');
+            } else {
+              console.log('✅ SignalR already connected on login');
+            }
+          } catch (error) {
+            console.error('❌ SignalR connection failed on login:', error);
+          }
+          
+          console.log('🔑 Login başarılı - Token ve User set edildi:', { 
+            hasToken: !!token, 
+            hasUser: !!userData, 
+            userId: userData.id 
+          });
+          return { success: true };
+        } else {
+          throw new Error('Token decode failed');
+        }
       } else {
-        throw new Error('Login failed - invalid response format');
+        throw new Error('Login failed - no token received');
       }
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'Giriş yapılırken bir hata oluştu';
@@ -105,14 +274,65 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    console.log('Logout starting...');
+    
+    // Önce state'i temizle (SignalR otomatik kapanacak)
     localStorage.removeItem('token');
     setUser(null);
+    setToken(null);
     setError(null);
+    
+    // SignalR bağlantısını kapat
+    try {
+      await signalrService.disconnect();
+      console.log('SignalR disconnected');
+    } catch (err) {
+      console.error('SignalR disconnect error:', err);
+    }
+    
+    console.log('Logout completed');
   };
+
+  // Token'ı yenile (opsiyonel - backend'de refresh token varsa)
+  const refreshToken = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token || isTokenExpired(token)) {
+        logout();
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      logout();
+      return false;
+    }
+  };
+
+  // Token süresini kontrol et ve otomatik yenile
+  useEffect(() => {
+    const checkTokenExpiry = () => {
+      const token = localStorage.getItem('token');
+      if (token && isTokenExpired(token)) {
+        console.log('Token expired, logging out...');
+        // Doğrudan state'i temizle, logout fonksiyonunu çağırma
+        localStorage.removeItem('token');
+        setUser(null);
+        setToken(null);
+        setError(null);
+      }
+    };
+
+    // Her 1 dakikada bir token süresini kontrol et (daha sık kontrol)
+    const interval = setInterval(checkTokenExpiry, 1 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []); // Boş dependency array - sadece bir kez çalışır
 
   const value = {
     user,
+    token,
     loading,
     error,
     login,
@@ -120,6 +340,7 @@ export const AuthProvider = ({ children }) => {
     forgotPassword,
     resetPassword,
     logout,
+    refreshToken,
   };
 
   return (

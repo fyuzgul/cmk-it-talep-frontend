@@ -11,7 +11,6 @@ const RequestManagement = () => {
     deleteRequest,
     requestTypes,
     requestStatuses,
-    requestResponseTypes,
     loading,
     error
   } = useRequests();
@@ -58,6 +57,11 @@ const RequestManagement = () => {
   useEffect(() => {
     loadRequests();
   }, []);
+
+  // Çevrimiçi kullanıcıları yükle
+  useEffect(() => {
+    fetchOnlineUsers().catch(console.error);
+  }, []); // fetchOnlineUsers'ı dependency'den kaldırdık
 
   // Filter changes with debounce
   useEffect(() => {
@@ -146,6 +150,22 @@ const RequestManagement = () => {
     }
   };
 
+  // Kullanıcının çevrimiçi olup olmadığını kontrol et
+  const isUserOnline = (userId) => {
+    if (!userId) return false;
+    
+    // SignalR'dan gelen veriyi öncelikle kullan
+    const usersToCheck = signalrConnected && signalrOnlineUsers.length > 0 ? signalrOnlineUsers : onlineUsers;
+    
+    if (!usersToCheck || usersToCheck.length === 0) return false;
+    
+    return usersToCheck.some(onlineUser => {
+      // API'den gelen format: { userId: 1005, isOnline: true, user: {...} }
+      const onlineUserId = onlineUser.userId || onlineUser.id || onlineUser;
+      return onlineUserId === userId && onlineUser.isOnline === true;
+    });
+  };
+
   const getResponseTypeBadgeClass = (responseTypeName) => {
     switch (responseTypeName?.toLowerCase()) {
       case 'onaylandı':
@@ -186,7 +206,6 @@ const RequestManagement = () => {
           onFilterChange={handleFilterChange}
           requestTypes={requestTypes}
           requestStatuses={requestStatuses}
-          requestResponseTypes={requestResponseTypes}
           users={users}
         />
 
@@ -236,10 +255,58 @@ const RequestManagement = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {request.requestCreator?.firstName} {request.requestCreator?.lastName}
+                      {request.requestCreator ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="relative">
+                            <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                              {request.requestCreator.firstName?.charAt(0) || 'U'}
+                            </div>
+                            {/* Çevrimiçi durumu göstergesi */}
+                            {isUserOnline(request.requestCreator.id) && (
+                              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-1">
+                              <span className="font-medium">
+                                {request.requestCreator.firstName} {request.requestCreator.lastName}
+                              </span>
+                              {isUserOnline(request.requestCreator.id) && (
+                                <span className="text-xs text-green-600 font-medium">Çevrimiçi</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 italic">Bilinmiyor</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {request.supportProvider?.firstName} {request.supportProvider?.lastName}
+                      {request.supportProvider ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="relative">
+                            <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                              {request.supportProvider.firstName?.charAt(0) || 'D'}
+                            </div>
+                            {/* Çevrimiçi durumu göstergesi */}
+                            {isUserOnline(request.supportProvider.id) && (
+                              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-1">
+                              <span className="font-medium">
+                                {request.supportProvider.firstName} {request.supportProvider.lastName}
+                              </span>
+                              {isUserOnline(request.supportProvider.id) && (
+                                <span className="text-xs text-green-600 font-medium">Çevrimiçi</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 italic">Atanmamış</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(request.requestStatus?.name)}`}>
@@ -248,11 +315,6 @@ const RequestManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {request.requestType?.name || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getResponseTypeBadgeClass(request.requestResponseType?.name)}`}>
-                        {request.requestResponseType?.name || '-'}
-                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(request.createdDate)}
@@ -340,7 +402,6 @@ const RequestManagement = () => {
           onRequestUpdated={handleRequestUpdated}
           requestTypes={requestTypes}
           requestStatuses={requestStatuses}
-          requestResponseTypes={requestResponseTypes}
           users={users}
         />
       )}

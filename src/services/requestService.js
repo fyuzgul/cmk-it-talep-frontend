@@ -73,7 +73,6 @@ export const requestService = {
     if (params.requestCreatorId) queryParams.append('requestCreatorId', params.requestCreatorId);
     if (params.requestStatusId) queryParams.append('requestStatusId', params.requestStatusId);
     if (params.requestTypeId) queryParams.append('requestTypeId', params.requestTypeId);
-    if (params.requestResponseTypeId) queryParams.append('requestResponseTypeId', params.requestResponseTypeId);
     if (params.description) queryParams.append('description', params.description);
     if (params.search) queryParams.append('description', params.search); // search parametresini description olarak gönder
     if (params.page) queryParams.append('page', params.page);
@@ -101,6 +100,7 @@ export const requestService = {
   },
 
   updateRequest: async (id, requestData) => {
+    console.log(`PUT /Request/${id}`, requestData);
     const response = await api.put(`/Request/${id}`, requestData);
     return response.data;
   },
@@ -117,7 +117,12 @@ export const requestService = {
   },
 
   getRequestsByCreator: async (requestCreatorId) => {
+    console.log('🔗 requestService.getRequestsByCreator called with ID:', requestCreatorId);
+    console.log('🔗 Making API call to:', `/Request/creator/${requestCreatorId}`);
     const response = await api.get(`/Request/creator/${requestCreatorId}`);
+    console.log('🔗 API response status:', response.status);
+    console.log('🔗 API response data:', response.data);
+    console.log('🔗 API response data length:', response.data?.length || 0);
     return response.data;
   },
 
@@ -131,13 +136,17 @@ export const requestService = {
     return response.data;
   },
 
-  getRequestsByResponseType: async (requestResponseTypeId) => {
-    const response = await api.get(`/Request/responsetype/${requestResponseTypeId}`);
-    return response.data;
-  },
 
   searchRequests: async (description) => {
     const response = await api.get(`/Request/search/${encodeURIComponent(description)}`);
     return response.data;
   },
+
+  // Mesajlaşma için ek metodlar
+  getAllRequests: async () => {
+    const response = await api.get('/Request');
+    return response.data;
+  },
 };
+
+export default requestService;
