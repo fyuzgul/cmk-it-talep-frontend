@@ -6,6 +6,7 @@ import signalrService from '../../services/signalrService';
 import toast from 'react-hot-toast';
 import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, formatFileSize } from '../../utils/fileUtils';
 import Base64FileViewer from '../common/Base64FileViewer';
+import ErrorBoundary from '../common/ErrorBoundary';
 
 const MessageCenter = () => {
   console.log('🚀 MessageCenter component rendered');
@@ -76,7 +77,19 @@ const MessageCenter = () => {
   const loadRequestResponses = useCallback(async (requestId) => {
     try {
       const responses = await getRequestResponsesByRequestId(requestId);
-      setRequestResponses(responses || []);
+      // API'den gelen veriyi düzelt - "null" string'leri gerçek null'a çevir
+      const cleanedResponses = responses?.map(response => ({
+        ...response,
+        // Backend'den gelen field'ları frontend'deki field'lara map et
+        base64Data: response.fileBase64 === 'null' || response.fileBase64 === 'undefined' ? null : response.fileBase64,
+        filePath: response.filePath === 'null' || response.filePath === 'undefined' ? null : response.filePath,
+        fileName: response.fileName === 'null' || response.fileName === 'undefined' ? null : response.fileName,
+        mimeType: response.fileMimeType === 'null' || response.fileMimeType === 'undefined' ? null : response.fileMimeType,
+        // Eski field'ları da koru (geriye uyumluluk için)
+        fileBase64: response.fileBase64 === 'null' || response.fileBase64 === 'undefined' ? null : response.fileBase64,
+        fileMimeType: response.fileMimeType === 'null' || response.fileMimeType === 'undefined' ? null : response.fileMimeType
+      })) || [];
+      setRequestResponses(cleanedResponses);
     } catch (error) {
       console.error('Error loading request responses:', error);
       toast.error('Cevaplar yüklenirken bir hata oluştu.');
@@ -192,6 +205,71 @@ const MessageCenter = () => {
     } catch (error) {
       return '-';
     }
+  };
+
+  // Saat formatla (mesajlar için)
+  const formatTime = (dateString) => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '-';
+      return date.toLocaleTimeString('tr-TR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return '-';
+    }
+  };
+
+  // Tarih formatla (gün ayırıcı için)
+  const formatDateForDivider = (dateString) => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '-';
+      return date.toLocaleDateString('tr-TR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return '-';
+    }
+  };
+
+  // Mesajları günlere göre grupla
+  const groupMessagesByDate = (messages) => {
+    const groups = [];
+    let currentDate = null;
+    let currentGroup = [];
+
+    messages.forEach((message, index) => {
+      const messageDate = new Date(message.createdDate);
+      const messageDateString = messageDate.toDateString();
+      
+      if (currentDate !== messageDateString) {
+        if (currentGroup.length > 0) {
+          groups.push({
+            date: currentDate,
+            messages: currentGroup
+          });
+        }
+        currentDate = messageDateString;
+        currentGroup = [message];
+      } else {
+        currentGroup.push(message);
+      }
+    });
+
+    if (currentGroup.length > 0) {
+      groups.push({
+        date: currentDate,
+        messages: currentGroup
+      });
+    }
+
+    return groups;
   };
 
   // Durum rengi al
@@ -608,7 +686,18 @@ const MessageCenter = () => {
                         </svg>
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900">Talep #{selectedRequest.id}</h3>
+                        <div className="flex items-center space-x-3">
+                          <h3 className="text-xl font-bold text-gray-900">Talep #{selectedRequest.id}</h3>
+                          {selectedRequest.supportProvider && isUserOnline(selectedRequest.supportProvider.id) && (
+                            <div className="flex items-center space-x-1">
+                              <span className="text-sm text-gray-600 font-medium">
+                                {selectedRequest.supportProvider.firstName} {selectedRequest.supportProvider.lastName}
+                              </span>
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="text-sm text-green-600 font-medium">çevrimiçi</span>
+                            </div>
+                          )}
+                        </div>
                         <div className="flex items-center space-x-3 mt-1">
                           <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full shadow-sm ${getStatusBadgeColor(selectedRequest.requestStatusId)}`}>
                             {getStatusName(selectedRequest.requestStatusId)}
@@ -626,33 +715,25 @@ const MessageCenter = () => {
                 </div>
 
                 {/* Chat Messages Area */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 min-h-0" style={{maxHeight: 'calc(100vh - 400px)'}}>
+                <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 min-h-0 bg-[#0a0a0a]" style={{maxHeight: 'calc(100vh - 400px)'}}>
                   {/* Talep Açıklaması - İlk Mesaj */}
                   <div className="flex justify-start">
-                    <div className="max-w-lg">
-                      <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl p-4 shadow-lg border border-gray-200/50">
-                        <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
-                            {user?.firstName?.charAt(0) || 'U'}
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm font-bold text-gray-900">Siz</p>
-                            <p className="text-xs text-gray-600 flex items-center">
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {formatDate(selectedRequest.createdDate)}
-                            </p>
-                          </div>
+                    <div className="max-w-[70%]">
+                      <div className="bg-[#2a2f32] rounded-lg p-1.5 shadow-sm">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-medium text-[#e9edef]">Siz</p>
+                          <p className="text-xs text-[#8696a0]">
+                            {formatTime(selectedRequest.createdDate)}
+                          </p>
                         </div>
-                        <p className="text-gray-800 text-sm whitespace-pre-wrap leading-relaxed">{selectedRequest.description}</p>
+                        <p className="text-[#e9edef] text-sm whitespace-pre-wrap leading-relaxed">{selectedRequest.description}</p>
                         {selectedRequest.screenshotFilePath && (
-                          <div className="mt-3">
+                          <div className="mt-2">
                             <a 
                               href={selectedRequest.screenshotFilePath} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="inline-flex items-center px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium hover:bg-indigo-200 transition-colors duration-200"
+                              className="inline-flex items-center px-2 py-1 bg-[#1f2937] text-[#e9edef] rounded text-xs hover:bg-[#374151] transition-colors duration-200"
                             >
                               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
@@ -665,177 +746,106 @@ const MessageCenter = () => {
                     </div>
                   </div>
 
-                  {/* Cevaplar */}
-                  {requestResponses.map((response) => {
-                    // String ve number karşılaştırması için güvenli kontrol
-                    const isFromCurrentUser = String(response.senderId) === String(user?.id);
-                    
-                    console.log('🔍 MessageCenter - Response debug:', {
-                      responseId: response.id,
-                      senderId: response.senderId,
-                      isFromCurrentUser,
-                      user: user?.id,
-                      isOnline: !isFromCurrentUser ? isUserOnline(response.senderId) : false
-                    });
-                    
-                    return (
-                      <div key={response.id} className={`flex ${isFromCurrentUser ? 'justify-end' : 'justify-start'}`}>
-                        <div className="max-w-lg">
-                          <div 
-                            className={`rounded-2xl p-4 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                              isFromCurrentUser 
-                                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl' 
-                                : `bg-gradient-to-r from-gray-100 to-gray-200 text-gray-900 hover:from-gray-200 hover:to-gray-300 shadow-md ${!response.isRead ? 'ring-2 ring-blue-400 shadow-xl' : ''}`
-                            }`}
-                            onClick={() => handleMessageClick(response)}
-                          >
-                            <div className="flex items-center mb-3">
-                              <div className="relative">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-md ${
-                                  isFromCurrentUser ? 'bg-indigo-600 text-white' : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
-                                }`}>
-                                  {isFromCurrentUser ? 'S' : 'D'}
-                                </div>
-                                {/* Çevrimiçi durumu göstergesi */}
-                                {!isFromCurrentUser && isUserOnline(response.senderId) && (
-                                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                                )}
-                              </div>
-                              <div className="ml-3">
-                                <div className="flex items-center space-x-2">
-                                  <p className={`text-sm font-bold ${isFromCurrentUser ? 'text-white' : 'text-gray-900'}`}>
-                                    {isFromCurrentUser ? 'Sen' : 'Destek'}
-                                  </p>
-                                  {!isFromCurrentUser && isUserOnline(response.senderId) && (
-                                    <span className="text-xs text-green-600 font-bold bg-green-100 px-2 py-0.5 rounded-full">
-                                      Çevrimiçi
-                                    </span>
-                                  )}
-                                </div>
-                                <p className={`text-xs flex items-center ${isFromCurrentUser ? 'text-indigo-200' : 'text-gray-600'}`}>
-                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
-                                  {formatDate(response.createdDate)}
-                                </p>
-                              </div>
-                            </div>
-                            <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isFromCurrentUser ? 'text-white' : 'text-gray-800'}`}>
-                              {response.message}
-                            </p>
-                            {(response.filePath || response.fileBase64) && (
-                              <div className="mt-3">
-                                {response.fileBase64 ? (
-                                  <Base64FileViewer
-                                    base64Data={response.fileBase64}
-                                    fileName={response.fileName || response.filePath}
-                                    mimeType={response.fileMimeType || 'application/octet-stream'}
-                                    className="max-w-xs"
-                                    showDownload={true}
-                                  />
-                                ) : (
-                                  <button
-                                    onClick={() => {
-                                      if (response.fileBase64) {
-                                        // Base64 verisi varsa yeni sayfada aç
-                                        const params = new URLSearchParams({
-                                          data: response.fileBase64,
-                                          name: response.fileName || response.filePath || 'Dosya',
-                                          type: response.fileMimeType || 'application/octet-stream'
-                                        });
-                                        window.open(`/file-viewer?${params.toString()}`, '_blank');
-                                      } else if (response.filePath) {
-                                        // Eski filePath varsa direkt aç
-                                        window.open(response.filePath, '_blank');
-                                      }
-                                    }}
-                                    className={`inline-flex items-center px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200 ${
-                                      isFromCurrentUser 
-                                        ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
-                                        : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                                    }`}
-                                  >
-                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                    </svg>
-                                    Ek dosya
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                            <div className="flex items-center justify-between mt-3">
-                              <div className={`text-xs font-medium ${isFromCurrentUser ? 'text-indigo-200' : 'text-gray-600'}`}>
-                                {response.isRead ? (
-                                  <span className="flex items-center">
-                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Okundu
-                                  </span>
-                                ) : (
-                                  <span className="flex items-center">
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-                                    Okunmadı
-                                  </span>
-                                )}
-                              </div>
-                              {response.readAt && (
-                                <div className={`text-xs ${isFromCurrentUser ? 'text-indigo-200' : 'text-gray-500'}`}>
-                                  {formatDate(response.readAt)}
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                  {/* Cevaplar - Günlere göre gruplandırılmış */}
+                  {groupMessagesByDate(requestResponses).map((group, groupIndex) => (
+                    <div key={groupIndex}>
+                      {/* Gün ayırıcı */}
+                      <div className="flex justify-center my-4">
+                        <div className="bg-[#2a2f32] text-[#8696a0] px-3 py-1 rounded-full text-xs font-medium">
+                          {formatDateForDivider(group.messages[0].createdDate)}
                         </div>
                       </div>
-                    );
-                  })}
+                      
+                      {/* Günün mesajları */}
+                      {group.messages.map((response) => {
+                        // String ve number karşılaştırması için güvenli kontrol
+                        const isFromCurrentUser = String(response.senderId) === String(user?.id);
+                        
+                        return (
+                          <div key={response.id} className={`flex ${isFromCurrentUser ? 'justify-end' : 'justify-start'} mb-2`}>
+                            <div className="max-w-[70%]">
+                              <div 
+                                className={`rounded-lg p-1.5 cursor-pointer transition-all duration-200 hover:shadow-sm ${
+                                  isFromCurrentUser 
+                                    ? 'bg-[#005c4b] text-white' 
+                                    : `bg-[#2a2f32] text-[#e9edef] ${!response.isRead ? 'ring-1 ring-blue-400' : ''}`
+                                }`}
+                                onClick={() => handleMessageClick(response)}
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center space-x-1">
+                                    <p className={`text-xs font-medium ${isFromCurrentUser ? 'text-white' : 'text-[#e9edef]'}`}>
+                                      {isFromCurrentUser ? 'Sen' : (selectedRequest.supportProvider ? `${selectedRequest.supportProvider.firstName} ${selectedRequest.supportProvider.lastName}` : 'Destek')}
+                                    </p>
+                                    <p className={`text-xs ${isFromCurrentUser ? 'text-green-100' : 'text-[#8696a0]'}`}>
+                                      {formatTime(response.createdDate)}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    {response.isRead ? (
+                                      <div className="flex items-center">
+                                        <svg className="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                        </svg>
+                                        <svg className="w-3 h-3 -ml-1 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                        </svg>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center">
+                                        <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isFromCurrentUser ? 'text-white' : 'text-[#e9edef]'}`}>
+                                  {response.message}
+                                </p>
+                                {(response.filePath || response.fileBase64) && (
+                                  <div className="mt-1">
+                                    <ErrorBoundary>
+                                      <Base64FileViewer
+                                        base64Data={response.fileBase64}
+                                        filePath={response.filePath}
+                                        fileName={response.fileName || response.filePath}
+                                        mimeType={response.fileMimeType || 'application/octet-stream'}
+                                        className="max-w-sm"
+                                        showDownload={true}
+                                      />
+                                    </ErrorBoundary>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
                   
                   {/* Scroll to bottom ref */}
                   <div ref={setMessagesEndRef} />
                 </div>
 
                 {/* Chat Input Area */}
-                <div className="p-6 border-t border-gray-200/50 bg-gradient-to-r from-gray-50 to-gray-100/50 flex-shrink-0">
-                  <div className="space-y-4">
+                <div className="p-4 border-t border-[#2a2f32] bg-[#1e2428] flex-shrink-0">
+                  <div className="space-y-3">
                     {/* Mesaj Input */}
-                    <div className="flex space-x-3">
+                    <div className="flex items-center space-x-2">
                       <div className="flex-1">
                         <textarea
                           value={responseForm.message}
                           onChange={(e) => setResponseForm({...responseForm, message: e.target.value})}
                           onKeyPress={handleKeyPress}
-                          rows={3}
-                          className="w-full px-4 py-3 border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none text-sm bg-white/80 backdrop-blur-sm shadow-sm transition-all duration-200"
-                          placeholder="Cevabınızı yazın... (Enter ile gönder, Shift+Enter ile yeni satır)"
+                          rows={2}
+                          className="w-full px-4 py-3 border border-[#2a2f32] rounded-full focus:outline-none focus:ring-1 focus:ring-[#00a884] focus:border-[#00a884] resize-none text-sm bg-[#2a2f32] text-[#e9edef] placeholder-[#8696a0] transition-all duration-200"
+                          placeholder="Mesaj yazın..."
                         />
                       </div>
-                      <button
-                        onClick={handleSendResponse}
-                        disabled={!responseForm.message.trim() || responseLoading}
-                        className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none"
-                      >
-                        {responseLoading ? (
-                          <div className="flex items-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Gönderiliyor...
-                          </div>
-                        ) : (
-                          <div className="flex items-center">
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                            </svg>
-                            Gönder
-                          </div>
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Dosya Seçme */}
-                    <div className="flex items-center space-x-3">
+                      
+                      {/* Dosya Seçme Butonu */}
                       <input
                         type="file"
                         id="file-upload"
@@ -846,43 +856,64 @@ const MessageCenter = () => {
                       />
                       <label
                         htmlFor="file-upload"
-                        className={`flex items-center px-4 py-2 border border-gray-300/50 rounded-xl text-sm font-medium bg-white/60 backdrop-blur-sm shadow-sm transition-all duration-200 hover:shadow-md ${
+                        className={`flex items-center justify-center w-12 h-12 border border-[#2a2f32] rounded-full text-sm font-medium bg-[#2a2f32] text-[#e9edef] transition-all duration-200 hover:bg-[#3b4043] ${
                           isUploading 
                             ? 'cursor-not-allowed opacity-50' 
-                            : 'cursor-pointer hover:bg-white/80'
+                            : 'cursor-pointer'
                         }`}
                       >
-                        <svg className="w-4 h-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-[#8696a0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                         </svg>
-                        {isUploading ? 'Yükleniyor...' : 'Dosya Seç'}
                       </label>
                       
-                      {responseForm.selectedFile && (
-                        <div className="mt-3">
-                          <div className="flex items-center space-x-3 bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-3 rounded-xl border border-indigo-200/50 shadow-sm">
-                            <span className="text-indigo-600 text-lg">{getFileIcon(responseForm.fileMimeType)}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-indigo-900 truncate">
-                                {responseForm.fileName}
-                              </p>
-                              <p className="text-xs text-indigo-600">
-                                {formatFileSize(responseForm.selectedFile.size)} • {responseForm.fileMimeType}
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={handleRemoveFile}
-                              className="text-indigo-400 hover:text-indigo-600 transition-colors p-1 rounded hover:bg-indigo-100"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
+                      {/* Gönderme Butonu */}
+                      <button
+                        onClick={handleSendResponse}
+                        disabled={!responseForm.message.trim() || responseLoading}
+                        className="w-12 h-12 bg-[#00a884] text-white rounded-full hover:bg-[#008069] focus:outline-none focus:ring-2 focus:ring-[#00a884] disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-all duration-200 disabled:transform-none flex items-center justify-center"
+                      >
+                        {responseLoading ? (
+                          <div className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Gönderiliyor...
                           </div>
-                        </div>
-                      )}
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
+
+                    {/* Seçilen Dosya Gösterimi */}
+                    {responseForm.selectedFile && (
+                      <div className="mt-2">
+                        <div className="flex items-center space-x-3 bg-[#2a2f32] px-3 py-2 rounded-lg border border-[#3b4043]">
+                          <span className="text-[#00a884] text-lg">{getFileIcon(responseForm.fileMimeType)}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-[#e9edef] truncate">
+                              {responseForm.fileName}
+                            </p>
+                            <p className="text-xs text-[#8696a0]">
+                              {formatFileSize(responseForm.selectedFile.size)} • {responseForm.fileMimeType}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveFile}
+                            className="text-[#8696a0] hover:text-[#e9edef] transition-colors p-1 rounded hover:bg-[#3b4043]"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
