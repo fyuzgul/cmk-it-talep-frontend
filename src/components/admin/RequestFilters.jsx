@@ -35,7 +35,6 @@ const RequestFilters = ({
       search: '',
       statusId: '',
       typeId: '',
-      responseTypeId: '',
       creatorId: '',
       supportProviderId: '',
       startDate: '',
@@ -133,19 +132,6 @@ const RequestFilters = ({
         {/* Advanced Filters */}
         {showAdvanced && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
-            <div>
-              <label htmlFor="responseTypeId" className="block text-sm font-medium text-gray-700 mb-1">
-                Yanıt Türü
-              </label>
-              <select
-                id="responseTypeId"
-                value={filters.responseTypeId}
-                onChange={(e) => handleInputChange('responseTypeId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">Tümü</option>
-              </select>
-            </div>
 
             <div>
               <label htmlFor="creatorId" className="block text-sm font-medium text-gray-700 mb-1">

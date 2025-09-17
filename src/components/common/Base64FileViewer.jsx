@@ -33,20 +33,22 @@ const Base64FileViewer = ({
   const renderContent = () => {
     if (isImage) {
       return (
-        <img
-          src={`data:${mimeType};base64,${base64Data}`}
-          alt={fileName || 'Resim'}
-          className="max-w-full max-h-full object-contain rounded"
-          style={{ maxWidth, maxHeight }}
-          onClick={() => setIsExpanded(!isExpanded)}
-        />
+        <div className="p-4">
+          <img
+            src={`data:${mimeType};base64,${base64Data}`}
+            alt={fileName || 'Resim'}
+            className="max-w-full max-h-full object-contain rounded cursor-pointer"
+            style={{ maxWidth, maxHeight }}
+            onClick={() => setIsExpanded(!isExpanded)}
+          />
+        </div>
       );
     }
 
     if (isPdf) {
       return (
         <div className="bg-white border border-gray-300 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+          <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <div className="flex items-center">
               <span className="text-red-600 text-lg mr-2">📄</span>
               <span className="text-sm font-medium text-gray-700">{fileName}</span>
@@ -79,7 +81,7 @@ const Base64FileViewer = ({
               </button>
             </div>
           </div>
-          <div className="p-4 text-center">
+          <div className="p-6 text-center">
             <div className="bg-gray-100 p-8 rounded-lg">
               <div className="text-red-600 text-6xl mb-4">📄</div>
               <p className="text-lg font-medium text-gray-700 mb-2">PDF Dosyası</p>

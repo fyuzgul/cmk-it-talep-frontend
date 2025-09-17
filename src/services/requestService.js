@@ -67,6 +67,8 @@ export const requestService = {
 
   // Request Management
   getRequests: async (params = {}) => {
+    console.log('🔍 requestService.getRequests called with params:', params);
+    
     const queryParams = new URLSearchParams();
     
     if (params.supportProviderId) queryParams.append('supportProviderId', params.supportProviderId);
@@ -85,7 +87,11 @@ export const requestService = {
     const queryString = queryParams.toString();
     const url = queryString ? `/Request?${queryString}` : '/Request';
     
+    console.log('🔍 Final URL:', url);
+    console.log('🔍 Query params:', queryString);
+    
     const response = await api.get(url);
+    console.log('🔍 API response data count:', response.data?.length || 0);
     return response.data;
   },
 

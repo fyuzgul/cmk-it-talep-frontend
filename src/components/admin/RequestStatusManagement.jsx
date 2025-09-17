@@ -89,6 +89,44 @@ const RequestStatusManagement = () => {
     setErrors({});
   };
 
+  // ID'ye göre renk belirleme - Taleplerim sayfasıyla aynı renkler
+  const getStatusIcon = (statusId) => {
+    const statusColors = {
+      1: 'from-gray-400 to-gray-500',    // Yeni
+      2: 'from-blue-400 to-blue-500',   // İşlemde
+      3: 'from-yellow-400 to-yellow-500', // Beklemede
+      4: 'from-green-500 to-green-600',  // Çözüldü
+      5: 'from-red-500 to-red-600'       // Kapalı
+    };
+    const iconColors = {
+      1: 'text-gray-200',    // Yeni
+      2: 'text-blue-200',    // İşlemde
+      3: 'text-yellow-200',  // Beklemede
+      4: 'text-green-100',   // Çözüldü
+      5: 'text-red-100'      // Kapalı
+    };
+    const icons = {
+      1: 'M12 6v6m0 0v6m0-6h6m-6 0H6',  // Yeni - Plus icon
+      2: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', // İşlemde - Refresh icon
+      3: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', // Beklemede - Clock icon
+      4: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', // Çözüldü - Check circle icon
+      5: 'M6 18L18 6M6 6l12 12' // Kapalı - X icon
+    };
+    
+    const bgColor = statusColors[statusId] || 'from-gray-400 to-gray-500';
+    const iconColor = iconColors[statusId] || 'text-gray-200';
+    const iconPath = icons[statusId] || 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z';
+    
+    return {
+      icon: (
+        <svg className={`w-6 h-6 ${iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={iconPath} />
+        </svg>
+      ),
+      gradient: bgColor
+    };
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -133,29 +171,29 @@ const RequestStatusManagement = () => {
             </div>
           </div>
         ) : (
-          statuses.map((status) => (
-            <div key={status.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group">
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+          statuses.map((status) => {
+            const statusIcon = getStatusIcon(status.id);
+            return (
+              <div key={status.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group">
+                <div className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className={`w-12 h-12 bg-gradient-to-br ${statusIcon.gradient} rounded-lg flex items-center justify-center`}>
+                            {statusIcon.icon}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">
-                          {status.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">Talep Durumu</p>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-gray-900 truncate">
+                            {status.name}
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">Talep Durumu</p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
               
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
                 <div className="flex justify-end space-x-2">
@@ -180,7 +218,8 @@ const RequestStatusManagement = () => {
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 

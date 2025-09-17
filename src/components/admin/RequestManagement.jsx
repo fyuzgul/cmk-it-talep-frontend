@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRequests } from '../../hooks/useRequests';
 import { useUsers } from '../../hooks/useUsers';
 import RequestFilters from './RequestFilters';
-import RequestDetailModal from './RequestDetailModal';
 
 const RequestManagement = () => {
   const {
@@ -21,7 +20,6 @@ const RequestManagement = () => {
     search: '',
     statusId: '',
     typeId: '',
-    responseTypeId: '',
     creatorId: '',
     supportProviderId: '',
     startDate: '',
@@ -30,16 +28,14 @@ const RequestManagement = () => {
     sortOrder: 'desc'
   });
 
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
-  // Load requests function
-  const loadRequests = async (customFilters = null, customPage = null) => {
+  // Initial load
+  useEffect(() => {
     const params = {
-      ...(customFilters || filters),
-      page: customPage || currentPage,
+      ...filters,
+      page: currentPage,
       pageSize: pageSize
     };
     
@@ -50,58 +46,76 @@ const RequestManagement = () => {
       }
     });
 
-    await fetchRequests(params);
-  };
-
-  // Initial load
-  useEffect(() => {
-    loadRequests();
+    fetchRequests(params).catch(error => {
+      console.error('Error fetching requests on initial load:', error);
+    });
   }, []);
 
-  // Çevrimiçi kullanıcıları yükle
-  useEffect(() => {
-    fetchOnlineUsers().catch(console.error);
-  }, []); // fetchOnlineUsers'ı dependency'den kaldırdık
+  // Çevrimiçi kullanıcıları yükle - şimdilik devre dışı
+  // useEffect(() => {
+  //   fetchOnlineUsers().catch(console.error);
+  // }, []);
 
-  // Filter changes with debounce
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      loadRequests();
-    }, 500); // 500ms debounce
+  // Filtrelenmiş talepler - MessageManagement gibi client-side filtreleme
+  const allFilteredRequests = requests.filter(request => {
+    if (filters.search && !request.description.toLowerCase().includes(filters.search.toLowerCase())) {
+      return false;
+    }
+    if (filters.statusId && request.requestStatusId !== parseInt(filters.statusId)) {
+      return false;
+    }
+    if (filters.typeId && request.requestTypeId !== parseInt(filters.typeId)) {
+      return false;
+    }
+    if (filters.creatorId && request.requestCreatorId !== parseInt(filters.creatorId)) {
+      return false;
+    }
+    if (filters.supportProviderId && request.supportProviderId !== parseInt(filters.supportProviderId)) {
+      return false;
+    }
+    if (filters.startDate) {
+      const requestDate = new Date(request.createdDate);
+      const startDate = new Date(filters.startDate);
+      if (requestDate < startDate) {
+        return false;
+      }
+    }
+    if (filters.endDate) {
+      const requestDate = new Date(request.createdDate);
+      const endDate = new Date(filters.endDate);
+      endDate.setHours(23, 59, 59, 999); // End of day
+      if (requestDate > endDate) {
+        return false;
+      }
+    }
+    return true;
+  });
 
-    return () => clearTimeout(timeoutId);
-  }, [
-    filters.search,
-    filters.statusId,
-    filters.typeId,
-    filters.responseTypeId,
-    filters.creatorId,
-    filters.supportProviderId,
-    filters.startDate,
-    filters.endDate,
-    filters.sortBy,
-    filters.sortOrder
-  ]);
+  // Sıralama
+  const sortedRequests = [...allFilteredRequests].sort((a, b) => {
+    const aValue = a[filters.sortBy] || a.createdDate;
+    const bValue = b[filters.sortBy] || b.createdDate;
+    
+    if (filters.sortOrder === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
 
-  // Page changes
-  useEffect(() => {
-    loadRequests();
-  }, [currentPage]);
+  // Sayfalama
+  const totalPages = Math.ceil(sortedRequests.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const filteredRequests = sortedRequests.slice(startIndex, endIndex);
+
+  // Sayfa değişiklikleri artık client-side filtreleme ile yönetiliyor
 
   const handleFilterChange = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setCurrentPage(1);
   };
 
-  const handleViewRequest = (request) => {
-    setSelectedRequest(request);
-    setShowDetailModal(true);
-  };
-
-  const handleEditRequest = (request) => {
-    setSelectedRequest(request);
-    setShowDetailModal(true);
-  };
 
   const handleDeleteRequest = async (id) => {
     if (window.confirm('Bu talebi silmek istediğinizden emin misiniz?')) {
@@ -114,15 +128,6 @@ const RequestManagement = () => {
     }
   };
 
-  const handleCloseModal = () => {
-    setShowDetailModal(false);
-    setSelectedRequest(null);
-  };
-
-  const handleRequestUpdated = () => {
-    loadRequests();
-    handleCloseModal();
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -150,20 +155,20 @@ const RequestManagement = () => {
     }
   };
 
-  // Kullanıcının çevrimiçi olup olmadığını kontrol et
+  // Kullanıcının çevrimiçi olup olmadığını kontrol et - şimdilik devre dışı
   const isUserOnline = (userId) => {
     if (!userId) return false;
     
-    // SignalR'dan gelen veriyi öncelikle kullan
-    const usersToCheck = signalrConnected && signalrOnlineUsers.length > 0 ? signalrOnlineUsers : onlineUsers;
+    // Şimdilik her zaman false döndür - çevrimiçi kullanıcı özelliği henüz aktif değil
+    return false;
     
-    if (!usersToCheck || usersToCheck.length === 0) return false;
-    
-    return usersToCheck.some(onlineUser => {
-      // API'den gelen format: { userId: 1005, isOnline: true, user: {...} }
-      const onlineUserId = onlineUser.userId || onlineUser.id || onlineUser;
-      return onlineUserId === userId && onlineUser.isOnline === true;
-    });
+    // Gelecekte SignalR entegrasyonu için:
+    // const usersToCheck = signalrConnected && signalrOnlineUsers.length > 0 ? signalrOnlineUsers : onlineUsers;
+    // if (!usersToCheck || usersToCheck.length === 0) return false;
+    // return usersToCheck.some(onlineUser => {
+    //   const onlineUserId = onlineUser.userId || onlineUser.id || onlineUser;
+    //   return onlineUserId === userId && onlineUser.isOnline === true;
+    // });
   };
 
   const getResponseTypeBadgeClass = (responseTypeName) => {
@@ -188,19 +193,40 @@ const RequestManagement = () => {
   }
 
   return (
-    <div className="px-4 py-6 sm:px-0">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Talep Yönetimi</h2>
-        <p className="text-gray-600">Sistemdeki tüm talepleri görüntüleyin ve yönetin</p>
-      </div>
-
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Talep Yönetimi</h1>
+              <p className="mt-2 text-gray-600">Sistemdeki tüm talepleri görüntüleyin ve yönetin</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-gray-600">
+                    {sortedRequests.length} talep
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
 
-      <div className="bg-white shadow rounded-lg">
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              {error}
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <RequestFilters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -209,202 +235,176 @@ const RequestManagement = () => {
           users={users}
         />
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Açıklama
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Talep Eden
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Destek Sağlayıcı
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Durum
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tür
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Yanıt Türü
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Oluşturma Tarihi
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  İşlemler
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {requests.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="px-6 py-4 text-center text-gray-500">
-                    {loading ? 'Yükleniyor...' : 'Hiç talep bulunamadı'}
-                  </td>
-                </tr>
-              ) : (
-                requests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
-                      <div className="truncate" title={request.description}>
-                        {request.description}
+        {/* Modern Card Layout */}
+        <div className="p-6">
+          {filteredRequests.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="mx-auto h-24 w-24 text-gray-400">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">
+                {loading ? 'Yükleniyor...' : 'Hiç talep bulunamadı'}
+              </h3>
+              <p className="mt-2 text-gray-500">
+                {loading ? 'Talepler yükleniyor...' : 'Filtreleri değiştirerek daha fazla talep bulabilirsiniz.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6">
+              {filteredRequests.map((request) => (
+                <div key={request.id} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200 hover:border-gray-300">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      {/* Talep Açıklaması */}
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                          {request.description}
+                        </h3>
+                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                          <span className="flex items-center">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            {request.requestType?.name || 'Tür belirtilmemiş'}
+                          </span>
+                          <span className="flex items-center">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {formatDate(request.createdDate)}
+                          </span>
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {request.requestCreator ? (
-                        <div className="flex items-center space-x-2">
+
+                      {/* Kullanıcı Bilgileri */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        {/* Talep Eden */}
+                        <div className="flex items-center space-x-3">
                           <div className="relative">
-                            <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                              {request.requestCreator.firstName?.charAt(0) || 'U'}
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg">
+                              {request.requestCreator?.firstName?.charAt(0) || 'U'}
                             </div>
-                            {/* Çevrimiçi durumu göstergesi */}
-                            {isUserOnline(request.requestCreator.id) && (
+                            {isUserOnline(request.requestCreator?.id) && (
                               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                             )}
                           </div>
                           <div>
-                            <div className="flex items-center space-x-1">
-                              <span className="font-medium">
-                                {request.requestCreator.firstName} {request.requestCreator.lastName}
-                              </span>
-                              {isUserOnline(request.requestCreator.id) && (
-                                <span className="text-xs text-green-600 font-medium">Çevrimiçi</span>
-                              )}
-                            </div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {request.requestCreator ? 
+                                `${request.requestCreator.firstName} ${request.requestCreator.lastName}` : 
+                                'Bilinmiyor'
+                              }
+                            </p>
+                            <p className="text-xs text-gray-500">Talep Eden</p>
+                            {isUserOnline(request.requestCreator?.id) && (
+                              <span className="text-xs text-green-600 font-medium">Çevrimiçi</span>
+                            )}
                           </div>
                         </div>
-                      ) : (
-                        <span className="text-gray-400 italic">Bilinmiyor</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {request.supportProvider ? (
-                        <div className="flex items-center space-x-2">
+
+                        {/* Destek Sağlayıcı */}
+                        <div className="flex items-center space-x-3">
                           <div className="relative">
-                            <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                              {request.supportProvider.firstName?.charAt(0) || 'D'}
+                            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg">
+                              {request.supportProvider?.firstName?.charAt(0) || 'D'}
                             </div>
-                            {/* Çevrimiçi durumu göstergesi */}
-                            {isUserOnline(request.supportProvider.id) && (
+                            {isUserOnline(request.supportProvider?.id) && (
                               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                             )}
                           </div>
                           <div>
-                            <div className="flex items-center space-x-1">
-                              <span className="font-medium">
-                                {request.supportProvider.firstName} {request.supportProvider.lastName}
-                              </span>
-                              {isUserOnline(request.supportProvider.id) && (
-                                <span className="text-xs text-green-600 font-medium">Çevrimiçi</span>
-                              )}
-                            </div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {request.supportProvider ? 
+                                `${request.supportProvider.firstName} ${request.supportProvider.lastName}` : 
+                                'Atanmamış'
+                              }
+                            </p>
+                            <p className="text-xs text-gray-500">Destek Sağlayıcı</p>
+                            {isUserOnline(request.supportProvider?.id) && (
+                              <span className="text-xs text-green-600 font-medium">Çevrimiçi</span>
+                            )}
                           </div>
                         </div>
-                      ) : (
-                        <span className="text-gray-400 italic">Atanmamış</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(request.requestStatus?.name)}`}>
+                      </div>
+                    </div>
+
+                    {/* Durum */}
+                    <div className="flex flex-col items-end">
+                      <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusBadgeClass(request.requestStatus?.name)}`}>
                         {request.requestStatus?.name || '-'}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {request.requestType?.name || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(request.createdDate)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleViewRequest(request)}
-                          className="text-indigo-600 hover:text-indigo-900"
-                        >
-                          Görüntüle
-                        </button>
-                        <button
-                          onClick={() => handleEditRequest(request)}
-                          className="text-yellow-600 hover:text-yellow-900"
-                        >
-                          Düzenle
-                        </button>
-                        <button
-                          onClick={() => handleDeleteRequest(request.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Sil
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {requests.length > 0 && (
-          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-            <div className="flex-1 flex justify-between sm:hidden">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Önceki
-              </button>
-              <button
-                onClick={() => setCurrentPage(prev => prev + 1)}
-                disabled={requests.length < pageSize}
-                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Sonraki
-              </button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
+        {filteredRequests.length > 0 && (
+          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
                 <p className="text-sm text-gray-700">
-                  Sayfa <span className="font-medium">{currentPage}</span>
+                  <span className="font-medium">{startIndex + 1}</span> - <span className="font-medium">{Math.min(endIndex, sortedRequests.length)}</span> / <span className="font-medium">{sortedRequests.length}</span> talep
                 </p>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-500">Sayfa:</span>
+                  <span className="text-sm font-medium text-gray-900">{currentPage} / {totalPages}</span>
+                </div>
               </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Önceki
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(prev => prev + 1)}
-                    disabled={requests.length < pageSize}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Sonraki
-                  </button>
-                </nav>
+              
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Önceki
+                </button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = i + 1;
+                    const isActive = pageNum === currentPage;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                          isActive
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={currentPage >= totalPages}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                >
+                  Sonraki
+                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
         )}
+        </div>
       </div>
 
-      {showDetailModal && (
-        <RequestDetailModal
-          request={selectedRequest}
-          onClose={handleCloseModal}
-          onRequestUpdated={handleRequestUpdated}
-          requestTypes={requestTypes}
-          requestStatuses={requestStatuses}
-          users={users}
-        />
-      )}
     </div>
   );
 };
