@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import signalrService from '../services/signalrService';
 import userService from '../services/userService';
@@ -20,16 +21,17 @@ const Dashboard = () => {
   console.log('🚀 Dashboard component rendered');
   
   const { user, logout } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   console.log('🚀 Dashboard - user from useAuth:', user);
   console.log('🚀 Dashboard - user.firstName:', user?.firstName);
   console.log('🚀 Dashboard - user.lastName:', user?.lastName);
   console.log('🚀 Dashboard - user.email:', user?.email);
 
-
   const [activeTab, setActiveTab] = useState('dashboard');
   const [refreshKey, setRefreshKey] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
   const [dashboardStats, setDashboardStats] = useState({
     totalRequests: 0,
     pendingRequests: 0,
@@ -100,6 +102,16 @@ const Dashboard = () => {
       loadDashboardStats();
     }
   }, [isAdmin]);
+
+  // URL parametrelerini kontrol et ve tab'ı ayarla (sadece ilk yüklemede)
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    
+    if (tab && activeTab === 'dashboard') {
+      setActiveTab(tab);
+      console.log('🎯 Initial tab from URL:', tab);
+    }
+  }, []);
 
   // SignalR event listeners - global state kullan
   useEffect(() => {
@@ -199,9 +211,9 @@ const Dashboard = () => {
       
       // Support tabs
       case 'kanbanBoard':
-        return <SupportKanbanBoard />;
+        return <SupportKanbanBoard onRequestSelect={setSelectedRequestId} onTabChange={setActiveTab} />;
       case 'messageManagement':
-        return <MessageManagement />;
+        return <MessageManagement selectedRequestId={selectedRequestId} onRequestSelected={setSelectedRequestId} />;
       
       // Test panelleri (herkes için)
       
@@ -509,8 +521,8 @@ const Dashboard = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                           </svg>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-red-600 transition-colors">Kanban Paneli</h3>
-                        <p className="text-sm text-gray-600 mt-2">Talepleri yönetin</p>
+                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-red-600 transition-colors">Talep Yöntemi</h3>
+                        <p className="text-sm text-gray-600 mt-2">Talepleri sürükleyip bırakarak yönetin</p>
                       </button>
                       
                       <button
@@ -779,7 +791,7 @@ const Dashboard = () => {
                         : 'text-primary-dark hover:bg-primary-red-50'
                     }`}
                   >
-                    Kanban Paneli
+                    Talep Yöntemi
                   </button>
                   <button
                     onClick={() => {

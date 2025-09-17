@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   DndContext,
@@ -183,9 +184,10 @@ const StatusColumn = ({ status, requests, requestTypes, requestStatuses, onViewR
 };
 
 
-// Main Kanban Board Component
-const SupportKanbanBoard = () => {
+// Main Request Method Component
+const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const {
     requests,
     requestTypes,
@@ -205,13 +207,6 @@ const SupportKanbanBoard = () => {
   } = useRequestResponses();
 
   const [activeId, setActiveId] = useState(null);
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [showResponseModal, setShowResponseModal] = useState(false);
-  const [requestResponses, setRequestResponses] = useState([]);
-  const [responseForm, setResponseForm] = useState({
-    message: '',
-    filePath: ''
-  });
   const [filters, setFilters] = useState({
     search: '',
     typeId: ''
@@ -339,61 +334,20 @@ const SupportKanbanBoard = () => {
   };
 
   const handleViewRequest = async (request) => {
-    setSelectedRequest(request);
-    setShowResponseModal(true);
-    setResponseForm({
-      message: '',
-      filePath: ''
-    });
+    // Navigate to message management with the selected request
+    console.log('🚀 Navigating to message management with request:', request);
     
-    // Load existing responses for this request
-    try {
-      const responses = await getRequestResponsesByRequestId(request.id);
-      setRequestResponses(responses || []);
-    } catch (error) {
-      console.error('Error loading request responses:', error);
-      setRequestResponses([]);
+    // Set the selected request ID in parent component
+    if (onRequestSelect) {
+      onRequestSelect(request.id);
+    }
+    
+    // Change tab to message management
+    if (onTabChange) {
+      onTabChange('messageManagement');
     }
   };
 
-  const handleAddResponse = async () => {
-    if (!responseForm.message.trim() || !selectedRequest) return;
-    
-    try {
-      const responseData = {
-        message: responseForm.message.trim(),
-        filePath: responseForm.filePath || null,
-        requestId: selectedRequest.id,
-        isDeleted: false
-      };
-      
-      await createRequestResponse(responseData);
-      setResponseForm({
-        message: '',
-        filePath: '',
-        requestResponseTypeId: ''
-      });
-      
-      // Reload responses
-      const responses = await getRequestResponsesByRequestId(selectedRequest.id);
-      setRequestResponses(responses || []);
-      
-      toast.success('Cevap başarıyla eklendi.');
-    } catch (error) {
-      console.error('Error adding response:', error);
-      toast.error('Cevap eklenirken bir hata oluştu.');
-    }
-  };
-
-  const handleCloseModal = () => {
-    setShowResponseModal(false);
-    setSelectedRequest(null);
-    setRequestResponses([]);
-    setResponseForm({
-      message: '',
-      filePath: ''
-    });
-  };
 
 
   if (loading && requests.length === 0) {
@@ -407,7 +361,7 @@ const SupportKanbanBoard = () => {
   return (
     <div className="p-4">
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Destek Paneli - Kanban Görünümü</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Talep Yöntemi</h2>
         <p className="text-sm text-gray-600">Talepleri sürükleyip bırakarak durumlarını değiştirebilirsiniz</p>
       </div>
 
@@ -484,134 +438,6 @@ const SupportKanbanBoard = () => {
         </DragOverlay>
       </DndContext>
 
-      {/* Response Modal */}
-      {showResponseModal && selectedRequest && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-4/5 lg:w-3/4 xl:w-2/3 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Talep Cevabı - #{selectedRequest.id}
-                </h3>
-                <button
-                  onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Request Description */}
-              <div className="mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Talep Açıklaması</h4>
-                  <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{selectedRequest.description}</p>
-                </div>
-              </div>
-
-              {/* Existing Responses */}
-              {requestResponses && requestResponses.length > 0 && (
-                <div className="mb-6">
-                  <h4 className="font-medium text-gray-900 mb-3">Mevcut Cevaplar</h4>
-                  <div className="space-y-3">
-                    {requestResponses.map((response) => (
-                      <div key={response.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="text-sm text-gray-500">
-                            {new Date(response.createdDate).toLocaleDateString('tr-TR', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </div>
-                        </div>
-                        <p className="text-gray-700 whitespace-pre-wrap">{response.message}</p>
-                        {(response.filePath || response.fileBase64) && (
-                          <div className="mt-2">
-                            <button
-                              onClick={() => {
-                                if (response.fileBase64) {
-                                  // Base64 verisi varsa yeni sayfada aç
-                                  const params = new URLSearchParams({
-                                    data: response.fileBase64,
-                                    name: response.fileName || response.filePath || 'Dosya',
-                                    type: response.fileMimeType || 'application/octet-stream'
-                                  });
-                                  window.open(`/file-viewer?${params.toString()}`, '_blank');
-                                } else if (response.filePath) {
-                                  // Eski filePath varsa direkt aç
-                                  window.open(response.filePath, '_blank');
-                                }
-                              }}
-                              className="text-indigo-600 hover:text-indigo-800 text-sm"
-                            >
-                              📎 Ek dosya
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Add New Response */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-3">Yeni Cevap Ekle</h4>
-                <div className="space-y-4">
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Cevap Mesajı *
-                    </label>
-                    <textarea
-                      value={responseForm.message}
-                      onChange={(e) => setResponseForm({...responseForm, message: e.target.value})}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="Cevabınızı yazın..."
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Dosya Yolu (opsiyonel)
-                    </label>
-                    <input
-                      type="text"
-                      value={responseForm.filePath}
-                      onChange={(e) => setResponseForm({...responseForm, filePath: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="Dosya yolu giriniz..."
-                    />
-                  </div>
-
-                  <div className="flex justify-end space-x-3">
-                    <button
-                      onClick={handleCloseModal}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                    >
-                      İptal
-                    </button>
-                    <button
-                      onClick={handleAddResponse}
-                      disabled={!responseForm.message.trim() || responseLoading}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {responseLoading ? 'Ekleniyor...' : 'Cevap Ekle'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

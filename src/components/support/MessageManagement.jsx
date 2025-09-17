@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, formatFileSize } from '../../utils/fileUtils';
 import Base64FileViewer from '../common/Base64FileViewer';
 
-const MessageManagement = () => {
+const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const { user } = useAuth();
   const {
     requests,
@@ -107,6 +107,27 @@ const MessageManagement = () => {
       setLoading(false);
     }
   }, [user?.id, loadSupportRequests]);
+
+  // Prop'tan gelen requestId'yi kullan ve ilgili talebi seç
+  useEffect(() => {
+    console.log('🔍 MessageManagement - selectedRequestId prop:', selectedRequestId);
+    console.log('🔍 MessageManagement - supportRequests length:', supportRequests.length);
+    console.log('🔍 MessageManagement - selectedRequest:', selectedRequest);
+    
+    if (selectedRequestId && supportRequests.length > 0 && (!selectedRequest || selectedRequest.id !== selectedRequestId)) {
+      const request = supportRequests.find(req => req.id === selectedRequestId);
+      console.log('🔍 MessageManagement - found request:', request);
+      
+      if (request) {
+        console.log('🎯 Auto-selecting request from prop:', request);
+        handleRequestSelect(request);
+        // Prop'u temizle
+        if (onRequestSelected) {
+          onRequestSelected(null);
+        }
+      }
+    }
+  }, [selectedRequestId, supportRequests, selectedRequest, onRequestSelected]);
 
   // Çevrimiçi kullanıcıları takip et
   useEffect(() => {
@@ -285,6 +306,12 @@ const MessageManagement = () => {
       fileName: null,
       fileMimeType: null
     });
+    
+    // Prop'u temizle (diğer chatlere geçebilmek için)
+    if (onRequestSelected) {
+      onRequestSelected(null);
+      console.log('🧹 Cleaned selectedRequestId prop');
+    }
     
     // SignalR grubuna katıl
     if (signalrService.isConnected) {
