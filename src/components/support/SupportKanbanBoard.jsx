@@ -530,16 +530,27 @@ const SupportKanbanBoard = () => {
                           </div>
                         </div>
                         <p className="text-gray-700 whitespace-pre-wrap">{response.message}</p>
-                        {response.filePath && (
+                        {(response.filePath || response.fileBase64) && (
                           <div className="mt-2">
-                            <a 
-                              href={response.filePath} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={() => {
+                                if (response.fileBase64) {
+                                  // Base64 verisi varsa yeni sayfada aç
+                                  const params = new URLSearchParams({
+                                    data: response.fileBase64,
+                                    name: response.fileName || response.filePath || 'Dosya',
+                                    type: response.fileMimeType || 'application/octet-stream'
+                                  });
+                                  window.open(`/file-viewer?${params.toString()}`, '_blank');
+                                } else if (response.filePath) {
+                                  // Eski filePath varsa direkt aç
+                                  window.open(response.filePath, '_blank');
+                                }
+                              }}
                               className="text-indigo-600 hover:text-indigo-800 text-sm"
                             >
                               📎 Ek dosya
-                            </a>
+                            </button>
                           </div>
                         )}
                       </div>

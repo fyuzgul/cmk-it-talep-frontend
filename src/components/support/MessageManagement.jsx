@@ -5,6 +5,8 @@ import { useRequestResponses } from '../../hooks/useRequestResponses';
 import { useSocket } from '../../hooks/useSocket';
 import signalrService from '../../services/signalrService';
 import toast from 'react-hot-toast';
+import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, formatFileSize } from '../../utils/fileUtils';
+import Base64FileViewer from '../common/Base64FileViewer';
 
 const MessageManagement = () => {
   const { user } = useAuth();
@@ -33,8 +35,13 @@ const MessageManagement = () => {
   });
   const [responseForm, setResponseForm] = useState({
     message: '',
-    filePath: ''
+    filePath: '',
+    selectedFile: null,
+    fileBase64: null,
+    fileName: null,
+    fileMimeType: null
   });
+  const [isUploading, setIsUploading] = useState(false);
   const [messagesEndRef, setMessagesEndRef] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
@@ -272,7 +279,11 @@ const MessageManagement = () => {
     await loadRequestResponses(request.id);
     setResponseForm({
       message: '',
-      filePath: ''
+      filePath: '',
+      selectedFile: null,
+      fileBase64: null,
+      fileName: null,
+      fileMimeType: null
     });
     
     // SignalR grubuna katıl
@@ -321,6 +332,62 @@ const MessageManagement = () => {
     scrollToBottom();
   }, [requestResponses]);
 
+  // Dosya seçme
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Dosya türü kontrolü
+    const allowedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 
+      'application/pdf', 'text/plain'
+    ];
+    if (!validateFileType(file, allowedTypes)) {
+      toast.error('Desteklenmeyen dosya türü. Sadece resim, PDF ve metin dosyaları kabul edilir.');
+      return;
+    }
+
+    // Dosya boyutu kontrolü (10MB)
+    if (!validateFileSize(file, 10)) {
+      toast.error('Dosya boyutu 10MB\'dan küçük olmalıdır.');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      toast.loading('Dosya yükleniyor...', { id: 'upload' });
+      
+      const fileData = await convertFileToBase64(file);
+      setResponseForm(prev => ({
+        ...prev,
+        selectedFile: file,
+        filePath: file.name, // Backward compatibility
+        fileBase64: fileData.base64,
+        fileName: fileData.fileName,
+        fileMimeType: fileData.mimeType
+      }));
+      
+      toast.success('Dosya başarıyla yüklendi!', { id: 'upload' });
+    } catch (error) {
+      console.error('Error converting file to base64:', error);
+      toast.error('Dosya yüklenirken bir hata oluştu.', { id: 'upload' });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Dosya kaldırma
+  const handleRemoveFile = () => {
+    setResponseForm(prev => ({
+      ...prev,
+      selectedFile: null,
+      filePath: '',
+      fileBase64: null,
+      fileName: null,
+      fileMimeType: null
+    }));
+  };
+
   // Cevap ekle
   const handleAddResponse = async () => {
     if (!responseForm.message.trim() || !selectedRequest) return;
@@ -328,7 +395,10 @@ const MessageManagement = () => {
     try {
       const responseData = {
         message: responseForm.message.trim(),
-        filePath: responseForm.filePath || null,
+        filePath: responseForm.filePath || null, // Backward compatibility
+        fileBase64: responseForm.fileBase64,
+        fileName: responseForm.fileName,
+        fileMimeType: responseForm.fileMimeType,
         requestId: selectedRequest.id,
         isDeleted: false
       };
@@ -361,7 +431,11 @@ const MessageManagement = () => {
       
       setResponseForm({
         message: '',
-        filePath: ''
+        filePath: '',
+        selectedFile: null,
+        fileBase64: null,
+        fileName: null,
+        fileMimeType: null
       });
       
       // Cevapları yeniden yükle
@@ -705,23 +779,44 @@ const MessageManagement = () => {
                             <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isFromSupport ? 'text-white' : 'text-gray-800'}`}>
                               {response.message}
                             </p>
-                            {response.filePath && (
+                            {(response.filePath || response.fileBase64) && (
                               <div className="mt-3">
-                                <a 
-                                  href={response.filePath} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className={`inline-flex items-center px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200 ${
-                                    isFromSupport 
-                                      ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
-                                      : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                                  }`}
-                                >
-                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                  </svg>
-                                  Ek dosya
-                                </a>
+                                {response.fileBase64 ? (
+                                  <Base64FileViewer
+                                    base64Data={response.fileBase64}
+                                    fileName={response.fileName || response.filePath}
+                                    mimeType={response.fileMimeType || 'application/octet-stream'}
+                                    className="max-w-xs"
+                                    showDownload={true}
+                                  />
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      if (response.fileBase64) {
+                                        // Base64 verisi varsa yeni sayfada aç
+                                        const params = new URLSearchParams({
+                                          data: response.fileBase64,
+                                          name: response.fileName || response.filePath || 'Dosya',
+                                          type: response.fileMimeType || 'application/octet-stream'
+                                        });
+                                        window.open(`/file-viewer?${params.toString()}`, '_blank');
+                                      } else if (response.filePath) {
+                                        // Eski filePath varsa direkt aç
+                                        window.open(response.filePath, '_blank');
+                                      }
+                                    }}
+                                    className={`inline-flex items-center px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200 ${
+                                      isFromSupport 
+                                        ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                                        : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                                    }`}
+                                  >
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                    </svg>
+                                    Ek dosya
+                                  </button>
+                                )}
                               </div>
                             )}
                             <div className="flex items-center justify-between mt-3">
@@ -798,12 +893,36 @@ const MessageManagement = () => {
                     {/* Dosya Yolu Input */}
                     <div>
                       <input
-                        type="text"
-                        value={responseForm.filePath}
-                        onChange={(e) => setResponseForm({...responseForm, filePath: e.target.value})}
+                        type="file"
+                        onChange={handleFileSelect}
+                        accept="image/*,application/pdf,text/*"
                         className="w-full px-4 py-3 border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white/80 backdrop-blur-sm shadow-sm transition-all duration-200"
-                        placeholder="Dosya yolu (opsiyonel)..."
+                        placeholder="Dosya seçin (opsiyonel)..."
                       />
+                      {responseForm.selectedFile && (
+                        <div className="mt-3">
+                          <div className="flex items-center space-x-3 bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-3 rounded-xl border border-indigo-200/50 shadow-sm">
+                            <span className="text-indigo-600 text-lg">{getFileIcon(responseForm.fileMimeType)}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-indigo-900 truncate">
+                                {responseForm.fileName}
+                              </p>
+                              <p className="text-xs text-indigo-600">
+                                {formatFileSize(responseForm.selectedFile.size)} • {responseForm.fileMimeType}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleRemoveFile}
+                              className="text-indigo-400 hover:text-indigo-600 transition-colors p-1 rounded hover:bg-indigo-100"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

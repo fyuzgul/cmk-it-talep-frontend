@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRequests } from '../../hooks/useRequests';
+import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, formatFileSize } from '../../utils/fileUtils';
+import Base64FileViewer from '../common/Base64FileViewer';
 
 const CreateRequest = ({ onRequestCreated }) => {
   const { user } = useAuth();
@@ -14,7 +16,10 @@ const CreateRequest = ({ onRequestCreated }) => {
   const [formData, setFormData] = useState({
     requestTypeId: '',
     description: '',
-    screenshotFile: null
+    screenshotFile: null,
+    screenshotBase64: null,
+    screenshotFileName: null,
+    screenshotMimeType: null
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,12 +36,39 @@ const CreateRequest = ({ onRequestCreated }) => {
     }));
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    setFormData(prev => ({
-      ...prev,
-      screenshotFile: file
-    }));
+    if (!file) return;
+
+    // Dosya türü kontrolü
+    const allowedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf', 'text/plain'
+    ];
+    if (!validateFileType(file, allowedTypes)) {
+      setSubmitError('Desteklenmeyen dosya türü. Sadece resim, PDF ve metin dosyaları kabul edilir.');
+      return;
+    }
+
+    // Dosya boyutu kontrolü (5MB)
+    if (!validateFileSize(file, 5)) {
+      setSubmitError('Dosya boyutu 5MB\'dan küçük olmalıdır.');
+      return;
+    }
+
+    try {
+      const fileData = await convertFileToBase64(file);
+      setFormData(prev => ({
+        ...prev,
+        screenshotFile: file,
+        screenshotBase64: fileData.base64,
+        screenshotFileName: fileData.fileName,
+        screenshotMimeType: fileData.mimeType
+      }));
+      setSubmitError(null);
+    } catch (error) {
+      setSubmitError('Dosya yüklenirken bir hata oluştu.');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -50,7 +82,10 @@ const CreateRequest = ({ onRequestCreated }) => {
         requestCreatorId: user.id,
         requestTypeId: parseInt(formData.requestTypeId),
         description: formData.description,
-        screenshotFilePath: formData.screenshotFile ? formData.screenshotFile.name : null
+        screenshotFilePath: formData.screenshotFile ? formData.screenshotFile.name : null, // Backward compatibility
+        screenshotBase64: formData.screenshotBase64,
+        screenshotFileName: formData.screenshotFileName,
+        screenshotMimeType: formData.screenshotMimeType
       };
 
       await createRequest(requestData);
@@ -58,7 +93,10 @@ const CreateRequest = ({ onRequestCreated }) => {
       setFormData({
         requestTypeId: '',
         description: '',
-        screenshotFile: null
+        screenshotFile: null,
+        screenshotBase64: null,
+        screenshotFileName: null,
+        screenshotMimeType: null
       });
       
       // Callback ile parent component'i bilgilendir
@@ -168,7 +206,7 @@ const CreateRequest = ({ onRequestCreated }) => {
                       id="screenshotFile"
                       name="screenshotFile"
                       type="file"
-                      accept="image/*"
+                      accept="image/*,application/pdf,text/*"
                       onChange={handleFileChange}
                       className="sr-only"
                     />
@@ -176,12 +214,37 @@ const CreateRequest = ({ onRequestCreated }) => {
                   <p className="pl-1">veya sürükleyip bırakın</p>
                 </div>
                 <p className="text-xs text-gray-500">
-                  PNG, JPG, GIF dosyaları kabul edilir
+                  Resim, PDF ve metin dosyaları kabul edilir (Max: 5MB)
                 </p>
                 {formData.screenshotFile && (
-                  <p className="text-sm text-green-600 font-medium">
-                    Seçilen dosya: {formData.screenshotFile.name}
-                  </p>
+                  <div className="mt-3">
+                    <div className="flex items-center space-x-3 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3 rounded-xl border border-green-200/50 shadow-sm">
+                      <span className="text-green-600 text-lg">{getFileIcon(formData.screenshotMimeType)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-green-900 truncate">
+                          {formData.screenshotFileName}
+                        </p>
+                        <p className="text-xs text-green-600">
+                          {formatFileSize(formData.screenshotFile.size)} • {formData.screenshotMimeType}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          screenshotFile: null,
+                          screenshotBase64: null,
+                          screenshotFileName: null,
+                          screenshotMimeType: null
+                        }))}
+                        className="text-green-400 hover:text-green-600 transition-colors p-1 rounded hover:bg-green-100"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -194,7 +257,10 @@ const CreateRequest = ({ onRequestCreated }) => {
               onClick={() => setFormData({
                 requestTypeId: '',
                 description: '',
-                screenshotFile: null
+                screenshotFile: null,
+                screenshotBase64: null,
+                screenshotFileName: null,
+                screenshotMimeType: null
               })}
               className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md text-primary-dark hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red transition-colors"
             >

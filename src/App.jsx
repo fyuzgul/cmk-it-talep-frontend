@@ -8,6 +8,7 @@ import Register from './components/auth/Register';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
 import Dashboard from './components/Dashboard';
+import FileViewerPage from './components/common/FileViewerPage';
 
 // SignalR bağlantısını yöneten wrapper component
 const AppWithSignalR = () => {
@@ -29,6 +30,8 @@ const AppWithSignalR = () => {
               </ProtectedRoute>
             } 
           />
+          <Route path="/file-viewer" element={<FileViewerPage />} />
+          <Route path="*" element={<FileViewerPage />} />
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
         <Toaster 
