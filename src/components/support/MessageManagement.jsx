@@ -672,7 +672,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style={{height: 'calc(100vh - 455px)'}}>
               {filteredRequests.length === 0 ? (
                 <div className="p-8 text-center">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
@@ -800,7 +800,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                 </div>
 
                 {/* Chat Messages Area */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 min-h-0 bg-[#0a0a0a]" style={{maxHeight: 'calc(100vh - 400px)'}}>
+                <div className="overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 bg-[#0a0a0a]" style={{height: 'calc(100vh - 400px)'}}>
                   {/* Talep Açıklaması - İlk Mesaj */}
                   <div className="flex justify-start">
                     <div className="max-w-[70%]">

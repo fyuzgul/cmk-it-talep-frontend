@@ -5,6 +5,7 @@ const RequestFilters = ({
   onFilterChange,
   requestTypes,
   requestStatuses,
+  priorityLevels,
   users
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -35,6 +36,7 @@ const RequestFilters = ({
       search: '',
       statusId: '',
       typeId: '',
+      priorityId: '',
       creatorId: '',
       supportProviderId: '',
       startDate: '',
@@ -102,6 +104,25 @@ const RequestFilters = ({
               {requestTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="sm:w-48">
+            <label htmlFor="priorityId" className="block text-sm font-medium text-gray-700 mb-1">
+              Öncelik Seviyesi
+            </label>
+            <select
+              id="priorityId"
+              value={filters.priorityId}
+              onChange={(e) => handleInputChange('priorityId', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">Tümü</option>
+              {priorityLevels.map((priority) => (
+                <option key={priority.id} value={priority.id}>
+                  {priority.name}
                 </option>
               ))}
             </select>

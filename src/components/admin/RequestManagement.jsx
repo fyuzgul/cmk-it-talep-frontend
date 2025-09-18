@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRequests } from '../../hooks/useRequests';
 import { useUsers } from '../../hooks/useUsers';
+import { usePriorityLevels } from '../../hooks/usePriorityLevels';
 import RequestFilters from './RequestFilters';
 
 const RequestManagement = () => {
@@ -15,11 +16,13 @@ const RequestManagement = () => {
   } = useRequests();
 
   const { users } = useUsers();
+  const { priorityLevels } = usePriorityLevels();
 
   const [filters, setFilters] = useState({
     search: '',
     statusId: '',
     typeId: '',
+    priorityId: '',
     creatorId: '',
     supportProviderId: '',
     startDate: '',
@@ -65,6 +68,9 @@ const RequestManagement = () => {
       return false;
     }
     if (filters.typeId && request.requestTypeId !== parseInt(filters.typeId)) {
+      return false;
+    }
+    if (filters.priorityId && request.priorityLevelId !== parseInt(filters.priorityId)) {
       return false;
     }
     if (filters.creatorId && request.requestCreatorId !== parseInt(filters.creatorId)) {
@@ -184,6 +190,29 @@ const RequestManagement = () => {
     }
   };
 
+  const getPriorityBadgeClass = (priorityId) => {
+    const priority = priorityLevels.find(p => p.id === priorityId);
+    if (!priority) return 'bg-gray-100 text-gray-800';
+
+    switch (priority.name?.toLowerCase()) {
+      case 'acil':
+        return 'bg-red-100 text-red-800';
+      case 'öncelikli':
+        return 'bg-orange-100 text-orange-800';
+      case 'normal':
+        return 'bg-blue-100 text-blue-800';
+      case 'düşük':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityName = (priorityId) => {
+    const priority = priorityLevels.find(p => p.id === priorityId);
+    return priority?.name || 'Bilinmiyor';
+  };
+
   if (loading && requests.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -232,6 +261,7 @@ const RequestManagement = () => {
           onFilterChange={handleFilterChange}
           requestTypes={requestTypes}
           requestStatuses={requestStatuses}
+          priorityLevels={priorityLevels}
           users={users}
         />
 
@@ -268,6 +298,12 @@ const RequestManagement = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                             </svg>
                             {request.requestType?.name || 'Tür belirtilmemiş'}
+                          </span>
+                          <span className="flex items-center">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            {getPriorityName(request.priorityLevelId)}
                           </span>
                           <span className="flex items-center">
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,10 +366,13 @@ const RequestManagement = () => {
                       </div>
                     </div>
 
-                    {/* Durum */}
-                    <div className="flex flex-col items-end">
+                    {/* Durum ve Öncelik */}
+                    <div className="flex flex-col items-end space-y-2">
                       <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusBadgeClass(request.requestStatus?.name)}`}>
                         {request.requestStatus?.name || '-'}
+                      </span>
+                      <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getPriorityBadgeClass(request.priorityLevelId)}`}>
+                        {getPriorityName(request.priorityLevelId)}
                       </span>
                     </div>
                   </div>

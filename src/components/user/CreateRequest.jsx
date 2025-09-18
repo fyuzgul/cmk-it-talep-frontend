@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRequests } from '../../hooks/useRequests';
+import { usePriorityLevels } from '../../hooks/usePriorityLevels';
 import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, formatFileSize } from '../../utils/fileUtils';
 import Base64FileViewer from '../common/Base64FileViewer';
 
@@ -13,8 +14,14 @@ const CreateRequest = ({ onRequestCreated }) => {
     error 
   } = useRequests();
 
+  const { 
+    priorityLevels, 
+    loading: priorityLoading 
+  } = usePriorityLevels();
+
   const [formData, setFormData] = useState({
     requestTypeId: '',
+    priorityLevelId: '',
     description: '',
     screenshotFile: null,
     screenshotBase64: null,
@@ -81,6 +88,7 @@ const CreateRequest = ({ onRequestCreated }) => {
       const requestData = {
         requestCreatorId: user.id,
         requestTypeId: parseInt(formData.requestTypeId),
+        priorityLevelId: parseInt(formData.priorityLevelId),
         description: formData.description,
         screenshotFilePath: formData.screenshotFile ? formData.screenshotFile.name : null, // Backward compatibility
         screenshotBase64: formData.screenshotBase64,
@@ -92,6 +100,7 @@ const CreateRequest = ({ onRequestCreated }) => {
       setSubmitSuccess(true);
       setFormData({
         requestTypeId: '',
+        priorityLevelId: '',
         description: '',
         screenshotFile: null,
         screenshotBase64: null,
@@ -110,7 +119,7 @@ const CreateRequest = ({ onRequestCreated }) => {
     }
   };
 
-  if (loading) {
+  if (loading || priorityLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-red"></div>
@@ -153,6 +162,28 @@ const CreateRequest = ({ onRequestCreated }) => {
               {requestTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Öncelik Seviyesi */}
+          <div>
+            <label htmlFor="priorityLevelId" className="block text-sm font-medium text-primary-dark mb-2">
+              Öncelik Seviyesi *
+            </label>
+            <select
+              id="priorityLevelId"
+              name="priorityLevelId"
+              value={formData.priorityLevelId}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
+            >
+              <option value="">Öncelik seviyesi seçin</option>
+              {priorityLevels.map((level) => (
+                <option key={level.id} value={level.id}>
+                  {level.name}
                 </option>
               ))}
             </select>
@@ -256,6 +287,7 @@ const CreateRequest = ({ onRequestCreated }) => {
               type="button"
               onClick={() => setFormData({
                 requestTypeId: '',
+                priorityLevelId: '',
                 description: '',
                 screenshotFile: null,
                 screenshotBase64: null,

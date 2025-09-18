@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRequests } from '../../hooks/useRequests';
+import { usePriorityLevels } from '../../hooks/usePriorityLevels';
 import signalrService from '../../services/signalrService';
 
 const MyRequests = () => {
@@ -14,11 +15,16 @@ const MyRequests = () => {
     error 
   } = useRequests();
 
+  const { 
+    priorityLevels 
+  } = usePriorityLevels();
+
   const [filteredRequests, setFilteredRequests] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [filters, setFilters] = useState({
     status: '',
     type: '',
+    priority: '',
     search: ''
   });
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -95,6 +101,10 @@ const MyRequests = () => {
 
     if (filters.type) {
       filtered = filtered.filter(req => req.requestTypeId === parseInt(filters.type));
+    }
+
+    if (filters.priority) {
+      filtered = filtered.filter(req => req.priorityLevelId === parseInt(filters.priority));
     }
 
     if (filters.search) {
@@ -213,6 +223,29 @@ const MyRequests = () => {
     return type?.name || 'Bilinmiyor';
   };
 
+  const getPriorityName = (priorityId, priorities) => {
+    const priority = priorities.find(p => p.id === priorityId);
+    return priority?.name || 'Bilinmiyor';
+  };
+
+  const getPriorityBadgeColor = (priorityId) => {
+    const priority = priorityLevels.find(p => p.id === priorityId);
+    if (!priority) return 'bg-gray-100 text-gray-800';
+
+    switch (priority.name?.toLowerCase()) {
+      case 'acil':
+        return 'bg-red-100 text-red-800';
+      case 'öncelikli':
+        return 'bg-orange-100 text-orange-800';
+      case 'normal':
+        return 'bg-blue-100 text-blue-800';
+      case 'düşük':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -238,7 +271,7 @@ const MyRequests = () => {
 
       {/* Filtreler */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label htmlFor="status" className="block text-sm font-medium text-primary-dark mb-1">
               Durum
@@ -279,7 +312,27 @@ const MyRequests = () => {
             </select>
           </div>
 
-          <div className="sm:col-span-2 lg:col-span-1">
+          <div>
+            <label htmlFor="priority" className="block text-sm font-medium text-primary-dark mb-1">
+              Öncelik Seviyesi
+            </label>
+            <select
+              id="priority"
+              name="priority"
+              value={filters.priority}
+              onChange={handleFilterChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
+            >
+              <option value="">Tüm Öncelikler</option>
+              {priorityLevels.map((priority) => (
+                <option key={priority.id} value={priority.id}>
+                  {priority.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label htmlFor="search" className="block text-sm font-medium text-primary-dark mb-1">
               Arama
             </label>
@@ -315,6 +368,9 @@ const MyRequests = () => {
                     Açıklama
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Öncelik
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Durum
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -338,6 +394,11 @@ const MyRequests = () => {
                       <div className="truncate" title={request.description}>
                         {request.description}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityBadgeColor(request.priorityLevelId)}`}>
+                        {getPriorityName(request.priorityLevelId, priorityLevels)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(request.requestStatusId)}`}>

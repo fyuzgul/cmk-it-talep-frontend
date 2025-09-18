@@ -11,6 +11,7 @@ import RequestStatusManagement from './admin/RequestStatusManagement';
 import RequestTypeManagement from './admin/RequestTypeManagement';
 import SupportTypeManagement from './admin/SupportTypeManagement';
 import UserManagement from './admin/UserManagement';
+import PriorityLevelManagement from './admin/PriorityLevelManagement';
 import CreateRequest from './user/CreateRequest';
 import MyRequests from './user/MyRequests';
 import MessageCenter from './user/MessageCenter';
@@ -200,6 +201,8 @@ const Dashboard = () => {
         return <SupportTypeManagement />;
       case 'users':
         return <UserManagement />;
+      case 'priorityLevels':
+        return <PriorityLevelManagement />;
       
       // User tabs
       case 'createRequest':
@@ -457,6 +460,26 @@ const Dashboard = () => {
                             <p className="text-sm text-gray-600 mt-1">Destek kategorilerini yönet</p>
                           </div>
                           <svg className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => setActiveTab('priorityLevels')}
+                        className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-orange-200 group text-left"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="bg-orange-50 group-hover:bg-orange-100 rounded-xl p-4 transition-colors">
+                            <svg className="w-7 h-7 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">Öncelik Seviyeleri</h3>
+                            <p className="text-sm text-gray-600 mt-1">Talep öncelik seviyelerini yönet</p>
+                          </div>
+                          <svg className="w-5 h-5 text-gray-400 group-hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </div>
@@ -730,6 +753,19 @@ const Dashboard = () => {
                     }`}
                   >
                     Kullanıcı Yönetimi
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('priorityLevels');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === 'priorityLevels'
+                        ? 'bg-primary-red-100 text-primary-red'
+                        : 'text-primary-dark hover:bg-primary-red-50'
+                    }`}
+                  >
+                    Öncelik Seviyesi Yönetimi
                   </button>
                 </>
               )}
