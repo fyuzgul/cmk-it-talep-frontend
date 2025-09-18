@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, formatFileSize } from '../../utils/fileUtils';
 import Base64FileViewer from '../common/Base64FileViewer';
 import ErrorBoundary from '../common/ErrorBoundary';
+import fileService from '../../services/fileService';
+import api from '../../services/api';
 
 const MessageCenter = () => {
   console.log('🚀 MessageCenter component rendered');
@@ -34,6 +36,7 @@ const MessageCenter = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [messagesEndRef, setMessagesEndRef] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [screenshotData, setScreenshotData] = useState(null);
 
   // Kullanıcının taleplerini yükle
   const loadUserRequests = useCallback(async () => {
@@ -95,6 +98,40 @@ const MessageCenter = () => {
       toast.error('Cevaplar yüklenirken bir hata oluştu.');
     }
   }, [getRequestResponsesByRequestId]);
+
+  // Screenshot verisini yükle
+  const loadScreenshotData = useCallback(async (request) => {
+    if (!request.screenshotFilePath) {
+      setScreenshotData(null);
+      return;
+    }
+
+    try {
+      console.log('📸 Loading screenshot data for request:', request.id);
+      console.log('📸 Screenshot file path:', request.screenshotFilePath);
+      
+      // API endpoint'ini kullanarak screenshot'ı çek
+      const response = await api.get(`/File/request/${request.id}/screenshot`);
+      console.log('✅ Screenshot data loaded:', response.data);
+      
+      setScreenshotData({
+        base64Data: response.data.base64Data || response.data.fileBase64,
+        fileName: response.data.fileName || request.screenshotFilePath.split('/').pop(),
+        mimeType: response.data.mimeType || response.data.fileMimeType || 'image/jpeg'
+      });
+    } catch (error) {
+      console.error('❌ Error loading screenshot:', error);
+      console.error('❌ Error details:', error.response?.data || error.message);
+      
+      // Fallback: filePath'i direkt kullan
+      console.log('🔄 Falling back to filePath approach');
+      setScreenshotData({
+        filePath: request.screenshotFilePath,
+        fileName: request.screenshotFilePath.split('/').pop(),
+        mimeType: 'image/jpeg'
+      });
+    }
+  }, []);
 
   useEffect(() => {
     console.log('🔄 MessageCenter useEffect triggered');
@@ -313,6 +350,9 @@ const MessageCenter = () => {
     setSelectedRequest(request);
     await loadRequestResponses(request.id);
     
+    // Screenshot verisini yükle
+    await loadScreenshotData(request);
+    
     // SignalR grubuna katıl
     if (signalrService.isConnected) {
       try {
@@ -323,11 +363,8 @@ const MessageCenter = () => {
       }
     }
     
-    // Tüm konuşmayı okundu işaretle
+    // Mesajları yeniden yükle
     try {
-      await markConversationAsRead(request.id);
-      
-      // Mesajları yeniden yükle
       await loadRequestResponses(request.id);
       
       // User requests listesini de güncelle
@@ -346,7 +383,7 @@ const MessageCenter = () => {
         )
       );
     } catch (error) {
-      console.error('Error marking conversation as read:', error);
+      console.error('Error loading request responses:', error);
     }
   };
 
@@ -727,19 +764,16 @@ const MessageCenter = () => {
                           </p>
                         </div>
                         <p className="text-[#e9edef] text-sm whitespace-pre-wrap leading-relaxed">{selectedRequest.description}</p>
-                        {selectedRequest.screenshotFilePath && (
+                        {screenshotData && (
                           <div className="mt-2">
-                            <a 
-                              href={selectedRequest.screenshotFilePath} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-2 py-1 bg-[#1f2937] text-[#e9edef] rounded text-xs hover:bg-[#374151] transition-colors duration-200"
-                            >
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                              </svg>
-                              Ekran Görüntüsü
-                            </a>
+                            <Base64FileViewer
+                              base64Data={screenshotData.base64Data}
+                              filePath={screenshotData.filePath}
+                              fileName={screenshotData.fileName}
+                              mimeType={screenshotData.mimeType}
+                              className="max-w-sm"
+                              showDownload={true}
+                            />
                           </div>
                         )}
                       </div>
