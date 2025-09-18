@@ -11,10 +11,7 @@ import fileService from '../../services/fileService';
 import api from '../../services/api';
 
 const MessageCenter = () => {
-  console.log('🚀 MessageCenter component rendered');
-  
   const { user } = useAuth();
-  console.log('🚀 MessageCenter - user from useAuth:', user);
   
   const { getRequestsByCreator } = useRequests();
   const { getRequestResponsesByRequestId, createRequestResponse, markAsRead } = useRequestResponses();
@@ -41,34 +38,20 @@ const MessageCenter = () => {
   // Kullanıcının taleplerini yükle
   const loadUserRequests = useCallback(async () => {
     if (!user?.id) {
-      console.log('❌ No user.id found, skipping request loading');
       return;
     }
     
-    console.log('🔄 Loading user requests for user.id:', user.id);
-    console.log('🔄 Current userRequests state:', userRequests);
-    
     try {
       setLoading(true);
-      console.log('📡 Calling getRequestsByCreator API...');
       const requests = await getRequestsByCreator(user.id);
-      console.log('✅ API Response - Loaded user requests:', requests);
-      console.log('📊 Request count:', requests?.length || 0);
-      console.log('📊 Request details:', requests?.map(r => ({ id: r.id, description: r.description })));
       
       // API'den gelen veriyi direkt kullan
       if (requests && requests.length > 0) {
-        console.log('✅ Using API response directly');
         setUserRequests(requests);
-        console.log('✅ userRequests state updated');
       } else {
-        console.log('⚠️ No requests found in API response');
         setUserRequests([]);
       }
     } catch (error) {
-      console.error('❌ Error loading user requests:', error);
-      console.error('❌ Error details:', error.response?.data || error.message);
-      console.error('❌ Error stack:', error.stack);
       toast.error('Talepler yüklenirken bir hata oluştu.');
       setUserRequests([]);
     } finally {
@@ -94,7 +77,6 @@ const MessageCenter = () => {
       })) || [];
       setRequestResponses(cleanedResponses);
     } catch (error) {
-      console.error('Error loading request responses:', error);
       toast.error('Cevaplar yüklenirken bir hata oluştu.');
     }
   }, [getRequestResponsesByRequestId]);
@@ -107,12 +89,8 @@ const MessageCenter = () => {
     }
 
     try {
-      console.log('📸 Loading screenshot data for request:', request.id);
-      console.log('📸 Screenshot file path:', request.screenshotFilePath);
-      
       // API endpoint'ini kullanarak screenshot'ı çek
       const response = await api.get(`/File/request/${request.id}/screenshot`);
-      console.log('✅ Screenshot data loaded:', response.data);
       
       setScreenshotData({
         base64Data: response.data.base64Data || response.data.fileBase64,
@@ -120,11 +98,7 @@ const MessageCenter = () => {
         mimeType: response.data.mimeType || response.data.fileMimeType || 'image/jpeg'
       });
     } catch (error) {
-      console.error('❌ Error loading screenshot:', error);
-      console.error('❌ Error details:', error.response?.data || error.message);
-      
       // Fallback: filePath'i direkt kullan
-      console.log('🔄 Falling back to filePath approach');
       setScreenshotData({
         filePath: request.screenshotFilePath,
         fileName: request.screenshotFilePath.split('/').pop(),
@@ -134,15 +108,9 @@ const MessageCenter = () => {
   }, []);
 
   useEffect(() => {
-    console.log('🔄 MessageCenter useEffect triggered');
-    console.log('🔄 user?.id:', user?.id);
-    console.log('🔄 user object:', user);
-    
     if (user?.id) {
-      console.log('🔄 Calling loadUserRequests...');
       loadUserRequests();
     } else {
-      console.log('🔄 No user.id, setting loading to false');
       setLoading(false);
     }
   }, [user?.id, loadUserRequests]);
@@ -151,13 +119,6 @@ const MessageCenter = () => {
   useEffect(() => {
     // Global online users state'ini al
     setOnlineUsers(signalrService.getOnlineUsersList());
-    
-    // SignalR bağlantısı kontrolü
-    if (signalrService.isConnected) {
-      console.log('🔵 MessageCenter - SignalR connected, waiting for online users...');
-    } else {
-      console.log('❌ MessageCenter - SignalR not connected');
-    }
 
     // Global state değişikliklerini dinle
     const handleOnlineUsersChange = () => {
@@ -180,11 +141,8 @@ const MessageCenter = () => {
   // SignalR mesajlarını dinle - gerçek zamanlı güncelleme
   useEffect(() => {
     const handleNewMessage = (message) => {
-      console.log('New message received via SignalR in MessageCenter:', message);
-      
       // Seçili talep için yeni mesaj geldi
       if (message.RequestId === selectedRequest?.id) {
-        console.log(`✅ Message for selected request ${selectedRequest.id} received in MessageCenter`);
         // Cevapları yeniden yükle
         loadRequestResponses(selectedRequest.id);
         
@@ -205,8 +163,6 @@ const MessageCenter = () => {
               : req
           )
         );
-      } else {
-        console.log(`ℹ️ Message for different request (${message.RequestId}), current: ${selectedRequest?.id}`);
       }
     };
 
@@ -222,7 +178,6 @@ const MessageCenter = () => {
   // Kullanıcının çevrimiçi olup olmadığını kontrol et
   const isUserOnline = (userId) => {
     const isOnline = onlineUsers.includes(userId);
-    console.log(`🔍 MessageCenter - isUserOnline(${userId}): ${isOnline}, onlineUsers:`, onlineUsers);
     return isOnline;
   };
 
@@ -357,9 +312,8 @@ const MessageCenter = () => {
     if (signalrService.isConnected) {
       try {
         await signalrService.joinRoom(`Request_${request.id}`);
-        console.log(`✅ Joined SignalR group: Request_${request.id}`);
       } catch (error) {
-        console.error('❌ Failed to join SignalR group:', error);
+        // SignalR group join error - silent fail
       }
     }
     
@@ -383,7 +337,7 @@ const MessageCenter = () => {
         )
       );
     } catch (error) {
-      console.error('Error loading request responses:', error);
+      // Error loading request responses - silent fail
     }
   };
 
@@ -429,13 +383,9 @@ const MessageCenter = () => {
             CreatedDate: new Date().toISOString(),
             Timestamp: new Date().toISOString()
           });
-          console.log('✅ Message sent via SignalR to group Request_' + selectedRequest.id);
         } catch (signalrError) {
-          console.error('❌ SignalR message send failed:', signalrError);
           // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
         }
-      } else {
-        console.warn('⚠️ SignalR not connected, message will not be sent in real-time');
       }
       
       setResponseForm({
@@ -452,7 +402,6 @@ const MessageCenter = () => {
       
       toast.success('Cevabınız başarıyla gönderildi.');
     } catch (error) {
-      console.error('Error sending response:', error);
       toast.error('Cevap gönderilirken bir hata oluştu.');
     } finally {
       setResponseLoading(false);
@@ -504,7 +453,6 @@ const MessageCenter = () => {
       
       toast.success('Dosya başarıyla yüklendi!', { id: 'upload' });
     } catch (error) {
-      console.error('Error converting file to base64:', error);
       toast.error('Dosya yüklenirken bir hata oluştu.', { id: 'upload' });
     } finally {
       setIsUploading(false);
@@ -531,7 +479,7 @@ const MessageCenter = () => {
         // Mesajları yeniden yükle
         await loadRequestResponses(selectedRequest.id);
       } catch (error) {
-        console.error('Error marking message as read:', error);
+        // Error marking message as read - silent fail
       }
     }
   };

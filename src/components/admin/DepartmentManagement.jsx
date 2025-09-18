@@ -61,7 +61,7 @@ const DepartmentManagement = () => {
       setFormData({ name: '' });
       setErrors({});
     } catch (error) {
-      console.error('Error saving department:', error);
+      // Error saving department - silent fail
     }
   };
 
@@ -76,7 +76,7 @@ const DepartmentManagement = () => {
       try {
         await deleteDepartment(id);
       } catch (error) {
-        console.error('Error deleting department:', error);
+        // Error deleting department - silent fail
       }
     }
   };

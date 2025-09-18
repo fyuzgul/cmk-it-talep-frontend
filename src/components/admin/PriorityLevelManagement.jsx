@@ -55,7 +55,7 @@ const PriorityLevelManagement = () => {
       setFormData({ name: '' });
       setErrors({});
     } catch (error) {
-      console.error('Error saving priority level:', error);
+      // Error saving priority level - silent fail
     }
   };
 
@@ -70,7 +70,7 @@ const PriorityLevelManagement = () => {
       try {
         await deletePriorityLevel(id);
       } catch (error) {
-        console.error('Error deleting priority level:', error);
+        // Error deleting priority level - silent fail
       }
     }
   };

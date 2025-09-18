@@ -30,9 +30,6 @@ const RequestTypeManagement = () => {
   const error = requestsError || supportError;
 
   // Debug logging
-  console.log('RequestTypeManagement - requestTypes count:', requestTypes?.length || 0);
-  console.log('RequestTypeManagement - loading:', loading);
-  console.log('RequestTypeManagement - error:', error);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -81,7 +78,7 @@ const RequestTypeManagement = () => {
       setFormData({ name: '', supportTypeId: '' });
       setErrors({});
     } catch (error) {
-      console.error('Error saving type:', error);
+      // Error saving type - silent fail
     }
   };
 
@@ -99,7 +96,7 @@ const RequestTypeManagement = () => {
       try {
         await deleteRequestType(id);
       } catch (error) {
-        console.error('Error deleting type:', error);
+        // Error deleting type - silent fail
       }
     }
   };

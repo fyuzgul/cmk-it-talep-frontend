@@ -22,7 +22,6 @@ const decodeJWT = (token) => {
     }).join(''));
     return JSON.parse(jsonPayload);
   } catch (error) {
-    console.error('Error decoding JWT:', error);
     return null;
   }
 };
@@ -36,7 +35,6 @@ const isTokenExpired = (token) => {
     const currentTime = Math.floor(Date.now() / 1000);
     return decoded.exp < currentTime;
   } catch (error) {
-    console.error('Error checking token expiration:', error);
     return true;
   }
 };
@@ -47,11 +45,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Error boundary için error handler
-  const handleError = (error, errorInfo) => {
-    console.error('AuthProvider Error:', error, errorInfo);
-    setError(error.message || 'Bir hata oluştu');
-  };
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -67,18 +60,12 @@ export const AuthProvider = ({ children }) => {
           
           // Token'dan kullanıcı bilgilerini çıkar
           const decoded = decodeJWT(token);
-          console.log('🔑 AuthContext - Decoded token:', decoded);
           
           if (decoded) {
             // JWT token'daki farklı field'ları kontrol et
             const userId = decoded.nameid || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
             const email = decoded.email || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
             const name = decoded.unique_name || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
-            
-            console.log('🔑 AuthContext - User ID from token:', userId);
-            console.log('🔑 AuthContext - Email from token:', email);
-            console.log('🔑 AuthContext - Name from token:', name, 'Type:', typeof name);
-            console.log('🔑 AuthContext - All claims:', Object.keys(decoded));
             
             // Name'i string'e çevir ve güvenli bir şekilde işle
             const nameString = typeof name === 'string' ? name : '';
@@ -96,7 +83,6 @@ export const AuthProvider = ({ children }) => {
               token: token // Token'ı user objesine de ekle
             };
             
-            console.log('🔑 AuthContext - User data created:', userData);
             setToken(token);
             setUser(userData);
             
@@ -104,18 +90,14 @@ export const AuthProvider = ({ children }) => {
             try {
               if (!signalrService.isConnected) {
                 await signalrService.connect(token);
-                console.log('✅ SignalR connected on app start');
-              } else {
-                console.log('✅ SignalR already connected on app start');
               }
             } catch (error) {
-              console.error('❌ SignalR connection failed on app start:', error);
+              // SignalR connection failed - silent fail
             }
           }
         }
       } catch (error) {
-        console.error('AuthContext useEffect error:', error);
-        handleError(error);
+        // AuthContext useEffect error - silent fail
       }
       setLoading(false);
     };
@@ -126,19 +108,16 @@ export const AuthProvider = ({ children }) => {
   // SignalR event listeners - global olarak dinle
   useEffect(() => {
     const handleUserOnline = (data) => {
-      console.log('🟢 AuthContext - User online:', data);
       // Global online users state'ini güncelle
       signalrService.onlineUsers.push(data.userId);
     };
 
     const handleUserOffline = (data) => {
-      console.log('🔴 AuthContext - User offline:', data);
       // Global online users state'ini güncelle
       signalrService.onlineUsers = signalrService.onlineUsers.filter(id => id !== data.userId);
     };
 
     const handleOnlineUsers = (userIds) => {
-      console.log('👥 AuthContext - Online users received:', userIds);
       // Global online users state'ini güncelle
       signalrService.onlineUsers = userIds;
     };
@@ -171,8 +150,6 @@ export const AuthProvider = ({ children }) => {
         
         // Token'dan kullanıcı bilgilerini çıkar
         const decoded = decodeJWT(token);
-        console.log('🔍 JWT Decoded FULL:', JSON.stringify(decoded, null, 2));
-        console.log('🔍 All JWT keys:', Object.keys(decoded));
         
         if (decoded) {
           // JWT token'daki farklı field'ları kontrol et
@@ -199,8 +176,6 @@ export const AuthProvider = ({ children }) => {
             decoded.fullName
           ];
           
-          console.log('🔍 ALL POSSIBLE NAMES:', possibleNames);
-          
           // İlk boş olmayan name'i bul - ARRAY DESTRUCTURING EKLE
           let name = possibleNames.find(n => {
             if (Array.isArray(n)) {
@@ -214,34 +189,25 @@ export const AuthProvider = ({ children }) => {
             name = name[0];
           }
           
-          console.log('🔍 SELECTED NAME:', name);
-          
           // Name'i string'e çevir ve güvenli bir şekilde işle
           let nameString = typeof name === 'string' ? name : '';
           let nameParts = nameString.split(' ').filter(part => part.trim() !== '');
-          
-          console.log('🔍 INITIAL nameString:', nameString, 'nameParts:', nameParts);
           
           // Eğer name boşsa, email'den isim çıkar
           if (nameParts.length === 0 && email) {
             const emailName = email.split('@')[0];
             nameParts = emailName.split('.').filter(part => part.trim() !== '');
             nameString = nameParts.join(' ');
-            console.log('🔍 EMAIL FALLBACK - emailName:', emailName, 'nameParts:', nameParts);
           }
           
           // Eğer hala boşsa, hardcoded isim ver
           if (nameParts.length === 0) {
             nameParts = ['Kullanıcı'];
             nameString = 'Kullanıcı';
-            console.log('🔍 HARDCODED FALLBACK');
           }
-          
-          console.log('🔍 FINAL nameString:', nameString, 'nameParts:', nameParts);
           
           // ULTRA FALLBACK - Eğer hala sorun varsa
           if (!nameParts || nameParts.length === 0) {
-            console.log('🚨 ULTRA FALLBACK TRIGGERED!');
             nameParts = ['Muhammed', 'Fatih'];
             nameString = 'Muhammed Fatih';
           }
@@ -258,8 +224,6 @@ export const AuthProvider = ({ children }) => {
             token: token // Token'ı user objesine de ekle
           };
           
-          console.log('🔍 FINAL userData:', userData);
-          
           setToken(token);
           setUser(userData);
           
@@ -267,19 +231,10 @@ export const AuthProvider = ({ children }) => {
           try {
             if (!signalrService.isConnected) {
               await signalrService.connect(token);
-              console.log('✅ SignalR connected on login');
-            } else {
-              console.log('✅ SignalR already connected on login');
             }
           } catch (error) {
-            console.error('❌ SignalR connection failed on login:', error);
+            // SignalR connection failed - silent fail
           }
-          
-          console.log('🔑 Login başarılı - Token ve User set edildi:', { 
-            hasToken: !!token, 
-            hasUser: !!userData, 
-            userId: userData.id 
-          });
           return { success: true };
         } else {
           throw new Error('Token decode failed');
@@ -342,8 +297,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    console.log('Logout starting...');
-    
     // Önce state'i temizle (SignalR otomatik kapanacak)
     localStorage.removeItem('token');
     setUser(null);
@@ -353,12 +306,9 @@ export const AuthProvider = ({ children }) => {
     // SignalR bağlantısını kapat
     try {
       await signalrService.disconnect();
-      console.log('SignalR disconnected');
     } catch (err) {
-      console.error('SignalR disconnect error:', err);
+      // SignalR disconnect error - silent fail
     }
-    
-    console.log('Logout completed');
   };
 
   // Token'ı yenile (opsiyonel - backend'de refresh token varsa)
@@ -371,7 +321,6 @@ export const AuthProvider = ({ children }) => {
       }
       return true;
     } catch (error) {
-      console.error('Error refreshing token:', error);
       logout();
       return false;
     }
@@ -382,7 +331,6 @@ export const AuthProvider = ({ children }) => {
     const checkTokenExpiry = () => {
       const token = localStorage.getItem('token');
       if (token && isTokenExpired(token)) {
-        console.log('Token expired, logging out...');
         // Doğrudan state'i temizle, logout fonksiyonunu çağırma
         localStorage.removeItem('token');
         setUser(null);

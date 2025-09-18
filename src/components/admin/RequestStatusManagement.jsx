@@ -55,7 +55,7 @@ const RequestStatusManagement = () => {
       setFormData({ name: '' });
       setErrors({});
     } catch (error) {
-      console.error('Error saving status:', error);
+      // Error saving status - silent fail
     }
   };
 
@@ -70,7 +70,7 @@ const RequestStatusManagement = () => {
       try {
         await deleteRequestStatus(id);
       } catch (error) {
-        console.error('Error deleting status:', error);
+        // Error deleting status - silent fail
       }
     }
   };

@@ -17,7 +17,7 @@ class PriorityLevelService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching priority levels:', error);
+      // Console log removed
       throw error;
     }
   }
@@ -38,7 +38,7 @@ class PriorityLevelService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching priority level:', error);
+      // Console log removed
       throw error;
     }
   }
@@ -61,7 +61,7 @@ class PriorityLevelService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error creating priority level:', error);
+      // Console log removed
       throw error;
     }
   }
@@ -84,7 +84,7 @@ class PriorityLevelService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error updating priority level:', error);
+      // Console log removed
       throw error;
     }
   }
@@ -106,7 +106,7 @@ class PriorityLevelService {
 
       return true;
     } catch (error) {
-      console.error('Error deleting priority level:', error);
+      // Console log removed
       throw error;
     }
   }

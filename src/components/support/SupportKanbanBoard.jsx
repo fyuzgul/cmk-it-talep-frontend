@@ -227,7 +227,7 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
         pageSize: 100 // Get more requests for kanban view
       });
     } catch (error) {
-      console.error('Error loading requests:', error);
+      // Console log removed
     }
   }, [user?.id, fetchRequests]);
 
@@ -308,14 +308,14 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
         modifiedDate: new Date().toISOString()
       };
       
-      console.log('Updating request with data:', updatedRequestData);
+      // Console log removed
       await updateRequest(activeRequest.id, updatedRequestData);
       await loadRequests(); // Refresh the list
       
       // Show success notification
       toast.success(`Talep "${activeRequest.description.substring(0, 30)}..." durumu "${targetStatus?.name}" olarak güncellendi ve size atandı.`);
     } catch (error) {
-      console.error('Error updating request status:', error);
+      // Console log removed
       toast.error('Talep durumu güncellenirken bir hata oluştu.');
     }
   };
@@ -327,7 +327,7 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
       await loadRequests();
       toast.success('Talep başarıyla güncellendi.');
     } catch (error) {
-      console.error('Error updating request:', error);
+      // Console log removed
       toast.error('Talep güncellenirken bir hata oluştu.');
       throw error;
     }
@@ -335,7 +335,7 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
 
   const handleViewRequest = async (request) => {
     // Navigate to message management with the selected request
-    console.log('🚀 Navigating to message management with request:', request);
+    // Console log removed
     
     // Set the selected request ID in parent component
     if (onRequestSelect) {

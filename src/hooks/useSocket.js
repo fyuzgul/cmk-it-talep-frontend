@@ -14,14 +14,14 @@ export const useSocket = () => {
   // Socket bağlantısını başlat
   const connect = useCallback(() => {
     if (token && user?.id) {
-      console.log('🔌 Socket bağlantısı başlatılıyor...', { userId: user.id, token: token.substring(0, 10) + '...' });
+      // Console log removed + '...' });
       socketService.connect(token);
     }
   }, [token, user?.id]);
 
   // Socket bağlantısını kapat
   const disconnect = useCallback(() => {
-    console.log('🔌 Socket bağlantısı kapatılıyor...');
+    // Console log removed
     socketService.disconnect();
     setIsConnected(false);
     setSocketId(null);
@@ -108,30 +108,30 @@ export const useSocket = () => {
   // Socket event dinleyicileri
   useEffect(() => {
     const handleConnect = (data) => {
-      console.log('✅ Socket bağlandı:', data);
+      // Console log removed
       setIsConnected(true);
       setSocketId(data.socketId);
       setConnectionError(null);
     };
 
     const handleDisconnect = (data) => {
-      console.log('❌ Socket bağlantısı kesildi:', data);
+      // Console log removed
       setIsConnected(false);
       setSocketId(null);
     };
 
     const handleError = (data) => {
-      console.error('❌ Socket hatası:', data);
+      // Console log removed
       setConnectionError(data.error);
     };
 
     const handleOnlineUsers = (users) => {
-      console.log('👥 Çevrimiçi kullanıcılar güncellendi:', users);
+      // Console log removed
       setOnlineUsers(users);
     };
 
     const handleUserStatusChanged = (data) => {
-      console.log('🔄 Kullanıcı durumu değişti:', data);
+      // Console log removed
       setOnlineUsers(prev => {
         if (data.isOnline) {
           // Kullanıcı çevrimiçi oldu - ekle veya güncelle
@@ -153,7 +153,7 @@ export const useSocket = () => {
     };
 
     const handleUserOnline = (data) => {
-      console.log('🟢 Kullanıcı çevrimiçi oldu:', data);
+      // Console log removed
       setOnlineUsers(prev => {
         const exists = prev.some(user => user.userId === data.userId);
         if (!exists) {
@@ -164,7 +164,7 @@ export const useSocket = () => {
     };
 
     const handleUserOffline = (data) => {
-      console.log('🔴 Kullanıcı çevrimdışı oldu:', data);
+      // Console log removed
       setOnlineUsers(prev => prev.filter(user => user.userId !== data.userId));
     };
 

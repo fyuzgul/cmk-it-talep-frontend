@@ -33,14 +33,14 @@ const FileViewerPage = () => {
         if (fileNameFromPath && fileNameFromPath !== 'file-viewer') {
           // Dosya adından veri çekmeye çalış
           try {
-            console.log('🔍 Searching for file:', fileNameFromPath);
+            // Console log removed
             const fileInfo = await fileService.getFileByFileName(fileNameFromPath);
-            console.log('📁 File info found:', fileInfo);
+            // Console log removed
             
             if (fileInfo) {
               if (fileInfo.base64Data) {
                 // Base64 verisi bulundu
-                console.log('✅ Base64 data found for file');
+                // Console log removed
                 setFileData({
                   base64Data: fileInfo.base64Data,
                   fileName: fileInfo.fileName || fileNameFromPath,
@@ -48,12 +48,12 @@ const FileViewerPage = () => {
                 });
               } else if (fileInfo.filePath) {
                 // Eski filePath bulundu, direkt yönlendir
-                console.log('🔄 Redirecting to file path:', fileInfo.filePath);
+                // Console log removed
                 window.location.href = fileInfo.filePath;
                 return;
               } else if (fileInfo.hasBase64 === false) {
                 // Dosya bulundu ama base64 verisi yok
-                console.log('⚠️ File found but no base64 data available');
+                // Console log removed
                 setError({
                   type: 'no_data',
                   message: `Dosya bulundu ancak base64 verisi mevcut değil. Dosya ${fileInfo.foundIn} içinde bulundu.`,
@@ -63,7 +63,7 @@ const FileViewerPage = () => {
                 });
               } else {
                 // Dosya bulundu ama veri yok
-                console.log('⚠️ File found but no data available');
+                // Console log removed
                 setError({
                   type: 'no_data',
                   message: 'Dosya bulundu ancak veri içeriği mevcut değil.',
@@ -74,7 +74,7 @@ const FileViewerPage = () => {
               }
             } else {
               // Dosya bulunamadı
-              console.log('❌ File not found in database');
+              // Console log removed
               setError({
                 type: 'no_data',
                 message: 'Bu dosya için veri bulunamadı.',
@@ -84,7 +84,7 @@ const FileViewerPage = () => {
               });
             }
           } catch (error) {
-            console.error('❌ Error fetching file:', error);
+            // Console log removed
             setError({
               type: 'no_data',
               message: 'Dosya yüklenirken bir hata oluştu.',

@@ -25,7 +25,7 @@ const Register = () => {
         const departmentsData = await commonAPI.getDepartments();
         setDepartments(departmentsData);
       } catch (err) {
-        console.error('Error fetching departments:', err);
+        // Error fetching departments - silent fail
       } finally {
         setLoadingData(false);
       }

@@ -4,7 +4,7 @@ export const requestService = {
   // Request Types
   getRequestTypes: async () => {
     const response = await api.get('/RequestType');
-    console.log('API: Request types response count:', response.data?.length || 0);
+    // Console log removed
     return response.data;
   },
 
@@ -67,7 +67,7 @@ export const requestService = {
 
   // Request Management
   getRequests: async (params = {}) => {
-    console.log('🔍 requestService.getRequests called with params:', params);
+    // Console log removed
     
     const queryParams = new URLSearchParams();
     
@@ -87,11 +87,11 @@ export const requestService = {
     const queryString = queryParams.toString();
     const url = queryString ? `/Request?${queryString}` : '/Request';
     
-    console.log('🔍 Final URL:', url);
-    console.log('🔍 Query params:', queryString);
+    // Console log removed
+    // Console log removed
     
     const response = await api.get(url);
-    console.log('🔍 API response data count:', response.data?.length || 0);
+    // Console log removed
     return response.data;
   },
 
@@ -106,7 +106,7 @@ export const requestService = {
   },
 
   updateRequest: async (id, requestData) => {
-    console.log(`PUT /Request/${id}`, requestData);
+    // Console log removed
     const response = await api.put(`/Request/${id}`, requestData);
     return response.data;
   },
@@ -123,12 +123,12 @@ export const requestService = {
   },
 
   getRequestsByCreator: async (requestCreatorId) => {
-    console.log('🔗 requestService.getRequestsByCreator called with ID:', requestCreatorId);
-    console.log('🔗 Making API call to:', `/Request/creator/${requestCreatorId}`);
+    // Console log removed
+    // Console log removed
     const response = await api.get(`/Request/creator/${requestCreatorId}`);
-    console.log('🔗 API response status:', response.status);
-    console.log('🔗 API response data:', response.data);
-    console.log('🔗 API response data length:', response.data?.length || 0);
+    // Console log removed
+    // Console log removed
+    // Console log removed
     return response.data;
   },
 

@@ -49,9 +49,9 @@ const MyRequests = () => {
     
     // SignalR bağlantısı kontrolü
     if (signalrService.isConnected) {
-      console.log('🔵 MyRequests - SignalR connected, waiting for online users...');
+      // Console log removed
     } else {
-      console.log('❌ MyRequests - SignalR not connected');
+      // Console log removed
     }
 
     // Global state değişikliklerini dinle
@@ -75,7 +75,7 @@ const MyRequests = () => {
   // Mesajlaşma için SignalR event listeners
   useEffect(() => {
     const handleNewMessage = (message) => {
-      console.log('New message received in MyRequests:', message);
+      // Console log removed
       if (message.RequestId === selectedRequest?.id) {
         setMessages(prev => [...prev, message]);
       }
@@ -145,7 +145,7 @@ const MyRequests = () => {
   // Kullanıcının çevrimiçi olup olmadığını kontrol et
   const isUserOnline = (userId) => {
     const isOnline = onlineUsers.includes(userId);
-    console.log(`🔍 MyRequests - isUserOnline(${userId}): ${isOnline}, onlineUsers:`, onlineUsers);
+    // Console log removed: ${isOnline}, onlineUsers:`, onlineUsers);
     return isOnline;
   };
 
@@ -190,10 +190,10 @@ const MyRequests = () => {
         });
         
         setNewMessage('');
-        console.log('✅ Message sent via SignalR');
+        // Console log removed
       }
     } catch (error) {
-      console.error('❌ Error sending message:', error);
+      // Console log removed
     }
   };
 
@@ -213,7 +213,7 @@ const MyRequests = () => {
         minute: '2-digit'
       });
     } catch (error) {
-      console.error('Date formatting error:', error);
+      // Console log removed
       return '-';
     }
   };

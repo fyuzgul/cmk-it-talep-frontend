@@ -19,14 +19,8 @@ import SupportKanbanBoard from './support/SupportKanbanBoard';
 import MessageManagement from './support/MessageManagement';
 
 const Dashboard = () => {
-  console.log('🚀 Dashboard component rendered');
-  
   const { user, logout } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  console.log('🚀 Dashboard - user from useAuth:', user);
-  console.log('🚀 Dashboard - user.firstName:', user?.firstName);
-  console.log('🚀 Dashboard - user.lastName:', user?.lastName);
-  console.log('🚀 Dashboard - user.email:', user?.email);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -66,19 +60,11 @@ const Dashboard = () => {
       // "Kapanan" durumunu bul (ID 5)
       const closedStatus = statuses.find(status => status.id === 5);
       
-      console.log('📊 Dashboard Stats - All statuses:', statuses);
-      console.log('📊 Dashboard Stats - Found closed status (ID 5):', closedStatus);
-      
       // İstatistikleri hesapla
       const totalRequests = requests.length;
       const pendingRequests = requests.filter(req => req.requestStatusId === 1 || req.requestStatusId === 2).length;
       const resolvedRequests = requests.filter(req => req.requestStatusId === 5).length; // ID 5 = Kapanan
       const totalUsers = users.length;
-      
-      console.log('📊 Dashboard Stats - Total requests:', totalRequests);
-      console.log('📊 Dashboard Stats - Pending requests:', pendingRequests);
-      console.log('📊 Dashboard Stats - Resolved requests:', resolvedRequests);
-      console.log('📊 Dashboard Stats - Total users:', totalUsers);
       
       setDashboardStats({
         totalRequests,
@@ -88,14 +74,11 @@ const Dashboard = () => {
       });
       
     } catch (error) {
-      console.error('Error loading dashboard stats:', error);
+      // Error loading dashboard stats - silent fail
     } finally {
       setLoading(false);
     }
   };
-  
-  console.log('🚀 Dashboard - activeTab:', activeTab);
-  console.log('🚀 Dashboard - isUser:', isUser, 'isSupport:', isSupport);
 
   // Dashboard istatistiklerini yükle
   useEffect(() => {
@@ -110,7 +93,6 @@ const Dashboard = () => {
     
     if (tab && activeTab === 'dashboard') {
       setActiveTab(tab);
-      console.log('🎯 Initial tab from URL:', tab);
     }
   }, []);
 
@@ -128,16 +110,11 @@ const Dashboard = () => {
           setOnlineUsers(usersWithIds);
         }
       }).catch(error => {
-        console.error('Error fetching user details:', error);
+        // Error fetching user details - silent fail
       });
     }
     
     // SignalR bağlantısı kontrolü
-    if (signalrService.isConnected) {
-      console.log('🔵 Dashboard - SignalR connected, waiting for online users...');
-    } else {
-      console.log('❌ Dashboard - SignalR not connected');
-    }
 
     // Global state değişikliklerini dinle
     const handleOnlineUsersChange = () => {
@@ -152,7 +129,7 @@ const Dashboard = () => {
             setOnlineUsers(usersWithIds);
           }
         }).catch(error => {
-          console.error('Error fetching user details:', error);
+          // Error fetching user details - silent fail
         });
       } else {
         setOnlineUsers([]);
@@ -176,9 +153,8 @@ const Dashboard = () => {
   const setUserOffline = async (userId) => {
     try {
       // Bu fonksiyon şimdilik boş, gerekirse API endpoint'i eklenebilir
-      console.log('Setting user offline:', userId);
     } catch (error) {
-      console.error('Error setting user offline:', error);
+      // Error setting user offline - silent fail
     }
   };
 
@@ -234,13 +210,13 @@ const Dashboard = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <p className="text-gray-600 text-sm font-medium mb-1">Toplam Talep</p>
-                            <p className="text-3xl font-bold text-gray-900">
+                            <div className="text-3xl font-bold text-gray-900">
                               {loading ? (
                                 <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
                               ) : (
                                 dashboardStats.totalRequests
                               )}
-                            </p>
+                            </div>
                             <p className="text-xs text-gray-500 mt-1">Tüm zamanlar</p>
                           </div>
                           <div className="bg-blue-50 rounded-full p-3">
@@ -256,13 +232,13 @@ const Dashboard = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <p className="text-gray-600 text-sm font-medium mb-1">Bekleyen Talep</p>
-                            <p className="text-3xl font-bold text-orange-600">
+                            <div className="text-3xl font-bold text-orange-600">
                               {loading ? (
                                 <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
                               ) : (
                                 dashboardStats.pendingRequests
                               )}
-                            </p>
+                            </div>
                             <p className="text-xs text-gray-500 mt-1">İşlem bekliyor</p>
                           </div>
                           <div className="bg-orange-50 rounded-full p-3">
@@ -278,13 +254,13 @@ const Dashboard = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <p className="text-gray-600 text-sm font-medium mb-1">Kapanan Talep</p>
-                            <p className="text-3xl font-bold text-green-600">
+                            <div className="text-3xl font-bold text-green-600">
                               {loading ? (
                                 <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
                               ) : (
                                 dashboardStats.resolvedRequests
                               )}
-                            </p>
+                            </div>
                             <p className="text-xs text-gray-500 mt-1">Başarıyla kapatıldı</p>
                           </div>
                           <div className="bg-green-50 rounded-full p-3">
@@ -300,13 +276,13 @@ const Dashboard = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <p className="text-gray-600 text-sm font-medium mb-1">Toplam Kullanıcı</p>
-                            <p className="text-3xl font-bold text-purple-600">
+                            <div className="text-3xl font-bold text-purple-600">
                               {loading ? (
                                 <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
                               ) : (
                                 dashboardStats.totalUsers
                               )}
-                            </p>
+                            </div>
                             <p className="text-xs text-gray-500 mt-1">Kayıtlı kullanıcı</p>
                           </div>
                           <div className="bg-purple-50 rounded-full p-3">
@@ -626,7 +602,6 @@ const Dashboard = () => {
                         try {
                           const decoded = JSON.parse(atob(token.split('.')[1]));
                           const uniqueName = decoded.unique_name;
-                          console.log('🔍 Sidebar - unique_name from JWT:', uniqueName);
                           
                           if (Array.isArray(uniqueName) && uniqueName.length > 0) {
                             // Türkçe karakter sorununu düzelt
@@ -636,7 +611,7 @@ const Dashboard = () => {
                             return decodeURIComponent(escape(uniqueName));
                           }
                         } catch (error) {
-                          console.error('JWT decode error:', error);
+                          // JWT decode error - silent fail
                         }
                       }
                       
@@ -853,16 +828,13 @@ const Dashboard = () => {
                   // Çıkış yapmadan önce offline yap
                   if (user?.id) {
                     try {
-                      console.log('🔴 Kullanıcı çıkış yapıyor, offline yapılıyor...', user.id);
-                      
                       // HTTP API ile offline yap
                       await setUserOffline(user.id);
-                      console.log('✅ HTTP API - Kullanıcı offline yapıldı');
                       
                       // SignalR ile offline yap (gerçek zamanlı)
                       // SignalR bağlantısı otomatik olarak kapanacak
                     } catch (err) {
-                      console.error('❌ Offline yapma hatası:', err);
+                      // Offline yapma hatası - silent fail
                     }
                   }
                   logout();

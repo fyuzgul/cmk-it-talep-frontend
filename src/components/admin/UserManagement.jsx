@@ -112,7 +112,7 @@ const UserManagement = () => {
       });
       setErrors({});
     } catch (error) {
-      console.error('Error saving user:', error);
+      // Error saving user - silent fail
     }
   };
 
@@ -134,7 +134,7 @@ const UserManagement = () => {
       try {
         await deleteUser(id);
       } catch (error) {
-        console.error('Error deleting user:', error);
+        // Error deleting user - silent fail
       }
     }
   };

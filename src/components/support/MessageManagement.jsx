@@ -49,33 +49,33 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   // Support kullanıcısının taleplerini yükle
   const loadSupportRequests = useCallback(async () => {
     if (!user?.id) {
-      console.log('❌ No user.id found, skipping support request loading');
+      // Console log removed
       return;
     }
     
-    console.log('🔄 Loading support requests for user.id:', user.id);
+    // Console log removed
     
     try {
       setLoading(true);
-      console.log('📡 Calling fetchRequests API with supportProviderId...');
+      // Console log removed
       const supportRequests = await fetchRequests({
         supportProviderId: user?.id,
         pageSize: 100
       });
-      console.log('✅ API Response - Loaded support requests:', supportRequests);
-      console.log('📊 Support request count:', supportRequests?.length || 0);
+      // Console log removed
+      // Console log removed
       
       // API'den gelen veriyi direkt kullan
       if (supportRequests && supportRequests.length > 0) {
-        console.log('✅ Using API response directly');
+        // Console log removed
         setSupportRequests(supportRequests);
       } else {
-        console.log('⚠️ No support requests found in API response');
+        // Console log removed
         setSupportRequests([]);
       }
     } catch (error) {
-      console.error('❌ Error loading support requests:', error);
-      console.error('❌ Error details:', error.response?.data || error.message);
+      // Console log removed
+      // Console log removed
       toast.error('Talepler yüklenirken bir hata oluştu.');
       setSupportRequests([]);
     } finally {
@@ -112,10 +112,10 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
       try {
         await markConversationAsRead(requestId);
       } catch (error) {
-        console.error('Error marking conversation as read:', error);
+        // Console log removed
       }
     } catch (error) {
-      console.error('Error loading request responses:', error);
+      // Console log removed
       toast.error('Cevaplar yüklenirken bir hata oluştu.');
     }
   }, [getRequestResponsesByRequestId, markConversationAsRead]);
@@ -130,16 +130,16 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
 
   // Prop'tan gelen requestId'yi kullan ve ilgili talebi seç
   useEffect(() => {
-    console.log('🔍 MessageManagement - selectedRequestId prop:', selectedRequestId);
-    console.log('🔍 MessageManagement - supportRequests length:', supportRequests.length);
-    console.log('🔍 MessageManagement - selectedRequest:', selectedRequest);
+    // Console log removed
+    // Console log removed
+    // Console log removed
     
     if (selectedRequestId && supportRequests.length > 0 && (!selectedRequest || selectedRequest.id !== selectedRequestId)) {
       const request = supportRequests.find(req => req.id === selectedRequestId);
-      console.log('🔍 MessageManagement - found request:', request);
+      // Console log removed
       
       if (request) {
-        console.log('🎯 Auto-selecting request from prop:', request);
+        // Console log removed
         handleRequestSelect(request);
         // Prop'u temizle
         if (onRequestSelected) {
@@ -189,11 +189,11 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   // SignalR mesajlarını dinle - gerçek zamanlı güncelleme
   useEffect(() => {
     const handleNewMessage = (message) => {
-      console.log('New message received via SignalR:', message);
+      // Console log removed
       
       // Seçili talep için yeni mesaj geldi
       if (message.RequestId === selectedRequest?.id) {
-        console.log(`✅ Message for selected request ${selectedRequest.id} received`);
+        // Console log removed
         // Cevapları yeniden yükle
         loadRequestResponses(selectedRequest.id);
         
@@ -215,12 +215,12 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
           )
         );
       } else {
-        console.log(`ℹ️ Message for different request (${message.RequestId}), current: ${selectedRequest?.id}`);
+        // Console log removed, current: ${selectedRequest?.id}`);
       }
     };
 
     const handleUserOnline = (data) => {
-      console.log('User online event received in MessageManagement:', data);
+      // Console log removed
       setOnlineUsers(prev => {
         if (!prev.includes(data.userId)) {
           return [...prev, data.userId];
@@ -230,12 +230,12 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
     };
 
     const handleUserOffline = (data) => {
-      console.log('User offline event received in MessageManagement:', data);
+      // Console log removed
       setOnlineUsers(prev => prev.filter(id => id !== data.userId));
     };
 
     const handleOnlineUsers = (userIds) => {
-      console.log('Online users updated in MessageManagement:', userIds);
+      // Console log removed
       setOnlineUsers(userIds);
     };
 
@@ -395,16 +395,16 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
     // Prop'u temizle (diğer chatlere geçebilmek için)
     if (onRequestSelected) {
       onRequestSelected(null);
-      console.log('🧹 Cleaned selectedRequestId prop');
+      // Console log removed
     }
     
     // SignalR grubuna katıl
     if (signalrService.isConnected) {
       try {
         await signalrService.joinRoom(`Request_${request.id}`);
-        console.log(`✅ Joined SignalR group: Request_${request.id}`);
+        // Console log removed
       } catch (error) {
-        console.error('❌ Failed to join SignalR group:', error);
+        // Console log removed
       }
     }
     
@@ -431,7 +431,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
         )
       );
     } catch (error) {
-      console.error('Error marking conversation as read:', error);
+      // Console log removed
     }
   };
 
@@ -481,7 +481,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
       
       toast.success('Dosya başarıyla yüklendi!', { id: 'upload' });
     } catch (error) {
-      console.error('Error converting file to base64:', error);
+      // Console log removed
       toast.error('Dosya yüklenirken bir hata oluştu.', { id: 'upload' });
     } finally {
       setIsUploading(false);
@@ -532,13 +532,13 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
             CreatedDate: new Date().toISOString(),
             Timestamp: new Date().toISOString()
           });
-          console.log('✅ Message sent via SignalR to group Request_' + selectedRequest.id);
+          // Console log removed
         } catch (signalrError) {
-          console.error('❌ SignalR message send failed:', signalrError);
+          // Console log removed
           // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
         }
       } else {
-        console.warn('⚠️ SignalR not connected, message will not be sent in real-time');
+        // Console log removed
       }
       
       setResponseForm({
@@ -555,7 +555,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
       
       toast.success('Cevap başarıyla eklendi.');
     } catch (error) {
-      console.error('Error adding response:', error);
+      // Console log removed
       toast.error('Cevap eklenirken bir hata oluştu.');
     }
   };
@@ -576,7 +576,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
         // Mesajları yeniden yükle
         await loadRequestResponses(selectedRequest.id);
       } catch (error) {
-        console.error('Error marking message as read:', error);
+        // Console log removed
       }
     }
   };

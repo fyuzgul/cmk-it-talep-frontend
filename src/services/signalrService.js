@@ -32,7 +32,7 @@ class SignalRService {
 
     // Eğer zaten bağlıysa
     if (this.isConnectionActive()) {
-      console.log('SignalR already connected');
+      // SignalR already connected
       return;
     }
 
@@ -42,12 +42,12 @@ class SignalRService {
     }
 
     try {
-      console.log('🔄 Connecting to SignalR...');
+      // Connecting to SignalR
       
       this.connection = new signalR.HubConnectionBuilder()
         .withUrl('/messageHub', {
           accessTokenFactory: () => {
-            console.log('🔑 Providing token for SignalR');
+            // Providing token for SignalR
             return token;
           },
           withCredentials: true,
@@ -60,72 +60,72 @@ class SignalRService {
 
       // Event listeners
       this.connection.onclose((error) => {
-        console.log('❌ SignalR connection closed:', error);
+        // SignalR connection closed
         this.emit('disconnected', error);
       });
 
       this.connection.onreconnecting((error) => {
-        console.log('🔄 SignalR reconnecting:', error);
+        // SignalR reconnecting
         this.emit('reconnecting', error);
       });
 
       this.connection.onreconnected((connectionId) => {
-        console.log('✅ SignalR reconnected:', connectionId);
+        // SignalR reconnected
         this.connectionAttempts = 0;
         this.emit('reconnected', connectionId);
       });
 
       // Hub events
       this.connection.on('UserOnline', (userId) => {
-        console.log('🟢 User online:', userId);
+        // User online
         this.onlineUsers.push(userId);
         this.emit('user:online', { userId });
       });
 
       this.connection.on('UserOffline', (userId) => {
-        console.log('🔴 User offline:', userId);
+        // User offline
         this.onlineUsers = this.onlineUsers.filter(id => id !== userId);
         this.emit('user:offline', { userId });
       });
 
       this.connection.on('OnlineUsers', (users) => {
-        console.log('👥 Online users received:', users);
+        // Online users received
         this.onlineUsers = users;
         this.emit('online:users', users);
       });
 
       this.connection.on('ReceiveMessage', (message) => {
-        console.log('💬 Message received:', message);
+        // Console log removed
         this.emit('message:new', message);
       });
 
       this.connection.on('UserTyping', (userId) => {
-        console.log('⌨️ User typing:', userId);
+        // Console log removed
         this.emit('user:typing', { userId });
       });
 
       this.connection.on('UserStoppedTyping', (userId) => {
-        console.log('⌨️ User stopped typing:', userId);
+        // Console log removed
         this.emit('user:stopped-typing', { userId });
       });
 
       this.connection.on('TypingUsers', (userIds) => {
-        console.log('⌨️ Typing users:', userIds);
+        // Console log removed
         this.emit('typing:users', userIds);
       });
 
       this.connection.on('MessageRead', (messageId, connectionId) => {
-        console.log('✅ Message read:', messageId, connectionId);
+        // Console log removed
         this.emit('message:read', { messageId, connectionId });
       });
 
       this.connection.on('UserJoined', (connectionId) => {
-        console.log('👋 User joined:', connectionId);
+        // Console log removed
         this.emit('user:joined', { connectionId });
       });
 
       this.connection.on('UserLeft', (connectionId) => {
-        console.log('👋 User left:', connectionId);
+        // Console log removed
         this.emit('user:left', { connectionId });
       });
 
@@ -133,11 +133,11 @@ class SignalRService {
       await this.connection.start();
       this.connectionAttempts = 0;
       
-      console.log('✅ SignalR connected successfully');
+      // Console log removed
       this.emit('connected');
       
     } catch (error) {
-      console.error('❌ SignalR connection failed:', error);
+      // Console log removed
       this.connectionAttempts++;
       this.emit('error', error);
       throw error;
@@ -146,11 +146,11 @@ class SignalRService {
 
   async disconnect() {
     if (this.connection) {
-      console.log('🔌 Disconnecting SignalR...');
+      // Console log removed
       try {
         await this.connection.stop();
       } catch (error) {
-        console.error('Error stopping connection:', error);
+        // Console log removed
       }
     }
     
@@ -182,7 +182,7 @@ class SignalRService {
         try {
           callback(data);
         } catch (error) {
-          console.error(`Event callback error (${event}):`, error);
+          // Console log removed:`, error);
         }
       });
     }
@@ -193,7 +193,7 @@ class SignalRService {
     if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
       return await this.connection.invoke(methodName, ...args);
     } else {
-      console.warn(`⚠️ SignalR not connected, cannot invoke ${methodName}`);
+      // Console log removed
       throw new Error('SignalR not connected');
     }
   }

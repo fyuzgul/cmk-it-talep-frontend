@@ -10,7 +10,7 @@ class SocketService {
   // Socket bağlantısını başlat
   connect(token) {
     if (this.socket && this.isConnected) {
-      console.log('Socket zaten bağlı');
+      // Console log removed
       return;
     }
 
@@ -25,64 +25,64 @@ class SocketService {
       });
 
       this.socket.on('connect', () => {
-        console.log('🔌 Socket.IO bağlandı:', this.socket.id);
+        // Console log removed
         this.isConnected = true;
         this.emit('socket:connected', { socketId: this.socket.id });
       });
 
       this.socket.on('disconnect', (reason) => {
-        console.log('🔌 Socket.IO bağlantısı kesildi:', reason);
+        // Console log removed
         this.isConnected = false;
         this.emit('socket:disconnected', { reason });
       });
 
       this.socket.on('connect_error', (error) => {
-        console.error('❌ Socket.IO bağlantı hatası:', error);
+        // Console log removed
         this.emit('socket:error', { error });
       });
 
       // Backend'den gelen UserStatusChanged event'i
       this.socket.on('UserStatusChanged', (data) => {
-        console.log(`🔄 Kullanıcı durumu değişti: ${data.userId} - ${data.isOnline ? 'Çevrimiçi' : 'Çevrimdışı'}`);
+        // Console log removed
         this.emit('user:status-changed', data);
       });
 
       // Online status güncellemeleri (eski format - fallback)
       this.socket.on('user:online', (data) => {
-        console.log('🟢 Kullanıcı çevrimiçi oldu:', data);
+        // Console log removed
         this.emit('user:online', data);
       });
 
       this.socket.on('user:offline', (data) => {
-        console.log('🔴 Kullanıcı çevrimdışı oldu:', data);
+        // Console log removed
         this.emit('user:offline', data);
       });
 
       this.socket.on('online:users', (users) => {
-        console.log('👥 Çevrimiçi kullanıcılar güncellendi:', users);
+        // Console log removed
         this.emit('online:users', users);
       });
 
       // Mesaj güncellemeleri
       this.socket.on('message:new', (message) => {
-        console.log('💬 Yeni mesaj:', message);
+        // Console log removed
         this.emit('message:new', message);
       });
 
       this.socket.on('message:read', (data) => {
-        console.log('✅ Mesaj okundu:', data);
+        // Console log removed
         this.emit('message:read', data);
       });
 
     } catch (error) {
-      console.error('❌ Socket bağlantısı kurulamadı:', error);
+      // Console log removed
     }
   }
 
   // Socket bağlantısını kapat
   disconnect() {
     if (this.socket) {
-      console.log('🔌 Socket bağlantısı kapatılıyor...');
+      // Console log removed
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
@@ -115,7 +115,7 @@ class SocketService {
         try {
           callback(data);
         } catch (error) {
-          console.error(`Event callback hatası (${event}):`, error);
+          // Console log removed:`, error);
         }
       });
     }
@@ -126,7 +126,7 @@ class SocketService {
     if (this.socket && this.isConnected) {
       this.socket.emit(event, data);
     } else {
-      console.warn('Socket bağlı değil, mesaj gönderilemedi:', event, data);
+      // Console log removed
     }
   }
 

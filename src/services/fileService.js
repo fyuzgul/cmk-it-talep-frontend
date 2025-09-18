@@ -4,61 +4,61 @@ const fileService = {
   // Dosya adından dosya verisini çekmeye çalış
   async getFileByFileName(fileName) {
     try {
-      console.log('🔍 FileService: Searching for file:', fileName);
+      // Console log removed
       
       // Önce tüm request'leri çek
-      console.log('📡 Fetching requests...');
+      // Console log removed
       const requestsResponse = await api.get('/Request');
       const requests = requestsResponse.data;
-      console.log('📊 Found requests:', requests?.length || 0);
+      // Console log removed
       
       // Screenshot dosyasını ara
       for (const request of requests) {
         if (request.screenshotFileName === fileName || 
             request.screenshotFilePath?.includes(fileName)) {
-          console.log('📸 Found screenshot file in request:', request.id);
+          // Console log removed
           try {
             const response = await api.get(`/File/request/${request.id}/screenshot`);
-            console.log('✅ Screenshot file data retrieved');
+            // Console log removed
             return response.data;
           } catch (screenshotError) {
-            console.error('❌ Error fetching screenshot:', screenshotError);
+            // Console log removed
             // Continue searching in responses
           }
         }
       }
 
       // RequestResponse'larda ara
-      console.log('📡 Fetching request responses...');
+      // Console log removed
       const responsesResponse = await api.get('/RequestResponse');
       const responses = responsesResponse.data;
-      console.log('📊 Found responses:', responses?.length || 0);
+      // Console log removed
       
       for (const response of responses) {
         if (response.fileName === fileName || 
             response.filePath?.includes(fileName)) {
-          console.log('📎 Found file in response:', response.id);
+          // Console log removed
           try {
             const fileResponse = await api.get(`/File/response/${response.id}/file`);
-            console.log('✅ Response file data retrieved');
+            // Console log removed
             return fileResponse.data;
           } catch (responseError) {
-            console.error('❌ Error fetching response file:', responseError);
+            // Console log removed
             // Continue searching
           }
         }
       }
 
-      console.log('❌ File not found in any request or response');
+      // Console log removed
       
       // Son çare olarak, dosya adını içeren tüm alanları kontrol et
-      console.log('🔍 Performing broader search...');
+      // Console log removed
       try {
         // Tüm request'lerde daha geniş arama
         for (const request of requests) {
           const requestStr = JSON.stringify(request).toLowerCase();
           if (requestStr.includes(fileName.toLowerCase())) {
-            console.log('🔍 Found file name in request data:', request.id);
+            // Console log removed
             // Bu durumda dosya bilgilerini döndür ama base64 olmayabilir
             return {
               fileName: fileName,
@@ -75,7 +75,7 @@ const fileService = {
         for (const response of responses) {
           const responseStr = JSON.stringify(response).toLowerCase();
           if (responseStr.includes(fileName.toLowerCase())) {
-            console.log('🔍 Found file name in response data:', response.id);
+            // Console log removed
             return {
               fileName: fileName,
               filePath: response.filePath,
@@ -87,13 +87,13 @@ const fileService = {
           }
         }
       } catch (searchError) {
-        console.error('❌ Error in broader search:', searchError);
+        // Console log removed
       }
       
       return null;
     } catch (error) {
-      console.error('❌ Error fetching file by name:', error);
-      console.error('❌ Error details:', error.response?.data || error.message);
+      // Console log removed
+      // Console log removed
       return null;
     }
   },

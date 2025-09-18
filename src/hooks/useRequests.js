@@ -14,11 +14,11 @@ export const useRequests = () => {
       setLoading(true);
       setError(null);
       const data = await requestService.getRequestTypes();
-      console.log('Hook: Fetched request types count:', data?.length || 0);
+      // Console log removed
       setRequestTypes(data);
       return data;
     } catch (err) {
-      console.error('Error fetching request types:', err);
+      // Console log removed
       setError(err.response?.data?.message || 'Talep türleri yüklenirken bir hata oluştu');
       throw err;
     } finally {
@@ -141,7 +141,7 @@ export const useRequests = () => {
       setRequests(data);
       return data;
     } catch (err) {
-      console.error('Error fetching requests:', err);
+      // Console log removed
       setError(err.response?.data?.message || 'Talepler yüklenirken bir hata oluştu');
       throw err;
     }
@@ -214,7 +214,7 @@ export const useRequests = () => {
       setRequests(data);
       return data;
     } catch (err) {
-      console.error('Error fetching requests by creator:', err);
+      // Console log removed
       setError(err.response?.data?.message || 'Kullanıcı talepleri yüklenirken bir hata oluştu');
       throw err;
     }

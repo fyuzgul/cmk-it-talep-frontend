@@ -55,7 +55,7 @@ const SupportTypeManagement = () => {
       setFormData({ name: '' });
       setErrors({});
     } catch (error) {
-      console.error('Error saving support type:', error);
+      // Error saving support type - silent fail
     }
   };
 
@@ -70,7 +70,7 @@ const SupportTypeManagement = () => {
       try {
         await deleteSupportType(id);
       } catch (error) {
-        console.error('Error deleting support type:', error);
+        // Error deleting support type - silent fail
       }
     }
   };

@@ -14,7 +14,7 @@ export const usePriorityLevels = () => {
       setPriorityLevels(data);
     } catch (err) {
       setError(err.message);
-      console.error('Error fetching priority levels:', err);
+      // Console log removed
     } finally {
       setLoading(false);
     }

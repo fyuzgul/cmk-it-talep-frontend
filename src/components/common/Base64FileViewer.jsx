@@ -65,7 +65,7 @@ const Base64FileViewer = ({
   const handleDownload = () => {
     try {
       if (!base64Data || !mimeType) {
-        console.error('Base64FileViewer: Missing data for download');
+        // Console log removed
         return;
       }
       
@@ -76,7 +76,7 @@ const Base64FileViewer = ({
       link.click();
       document.body.removeChild(link);
     } catch (error) {
-      console.error('Base64FileViewer: Download error:', error);
+      // Console log removed
     }
   };
 
@@ -110,7 +110,7 @@ const Base64FileViewer = ({
               }}
               onClick={() => setIsExpanded(!isExpanded)}
               onError={(e) => {
-                console.error('❌ Image load error:', fileName);
+                // Console log removed
                 e.target.style.display = 'none';
               }}
             />
@@ -370,7 +370,7 @@ const Base64FileViewer = ({
     </div>
   );
   } catch (error) {
-    console.error('Base64FileViewer Error:', error);
+    // Console log removed
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-w-xs">
         <div className="flex items-center space-x-3">

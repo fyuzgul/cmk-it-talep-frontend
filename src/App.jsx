@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
@@ -12,8 +12,6 @@ import FileViewerPage from './components/common/FileViewerPage';
 
 // SignalR bağlantısını yöneten wrapper component
 const AppWithSignalR = () => {
-  const { user } = useAuth();
-  
   return (
     <Router>
       <div className="App">
