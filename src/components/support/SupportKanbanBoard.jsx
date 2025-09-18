@@ -48,7 +48,7 @@ const SortableRequestCard = ({ request, requestTypes, requestStatuses, onViewReq
       case 'yeni':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'işlemde':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-800 text-yellow-800 border-yellow-200';
       case 'tamamlandı':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'reddedildi':
@@ -57,6 +57,23 @@ const SortableRequestCard = ({ request, requestTypes, requestStatuses, onViewReq
         return 'bg-orange-100 text-orange-800 border-orange-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusBorderClass = (statusId) => {
+    switch (statusId) {
+      case 1: // Yeni
+        return 'border-l-gray-400';
+      case 2: // Beklemede
+        return 'border-l-blue-400';
+      case 3: // İşlemde
+        return 'border-l-yellow-400';
+      case 4: // Çözüldü
+        return 'border-l-green-500';
+      case 5: // Kapalı
+        return 'border-l-red-500';
+      default:
+        return 'border-l-gray-400';
     }
   };
 
@@ -86,51 +103,62 @@ const SortableRequestCard = ({ request, requestTypes, requestStatuses, onViewReq
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className={`kanban-card bg-white rounded-lg shadow-sm border-l-4 border-l-gray-500 border border-gray-200 p-3 hover:shadow-md transition-all duration-200 hover:scale-105`}
+      className={`kanban-card bg-white rounded-lg shadow-sm border-l-4 ${getStatusBorderClass(request.requestStatusId)} border border-gray-200 p-3 sm:p-4 hover:shadow-md transition-all duration-200 hover:scale-105 touch-manipulation`}
     >
-      {/* Drag Handle */}
-      <div 
-        {...listeners}
-        className="cursor-move flex items-center justify-between mb-1"
-      >
-        <div className="flex-1">
-          <h4 className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
+      {/* Mobile-friendly Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm sm:text-xs font-medium text-gray-900 line-clamp-2 mb-2">
             {request.description}
           </h4>
-          <p className="text-xs text-gray-500 mb-1">
-            {getTypeName(request.requestTypeId)}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+            <span className="text-xs text-gray-500">
+              {getTypeName(request.requestTypeId)}
+            </span>
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadgeClass(getStatusName(request.requestStatusId))}`}>
+              {getStatusName(request.requestStatusId)}
+            </span>
+          </div>
         </div>
-        <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full border ${getStatusBadgeClass(getStatusName(request.requestStatusId))}`}>
-          {getStatusName(request.requestStatusId)}
-        </span>
+        
+        {/* Mobile Drag Handle - Larger touch target */}
+        <div 
+          {...listeners}
+          className="cursor-move p-2 -m-2 touch-manipulation flex-shrink-0"
+          style={{ minWidth: '44px', minHeight: '44px' }} // iOS/Android minimum touch target
+        >
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+          </svg>
+        </div>
       </div>
       
-      {/* Clickable Area for Response */}
-      <div 
-        className="p-1 cursor-pointer hover:bg-gray-50 rounded transition-colors duration-200"
-        onClick={() => onViewRequest(request)}
-      >
+      {/* Mobile-friendly Content */}
+      <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <div className="flex items-center space-x-1">
-            <span className="font-medium text-xs">
+          <div className="flex items-center space-x-1 min-w-0 flex-1">
+            <span className="font-medium text-xs truncate">
               {request.requestCreator?.firstName} {request.requestCreator?.lastName}
             </span>
           </div>
-          <span className="text-xs">{formatDate(request.createdDate)}</span>
+          <span className="text-xs flex-shrink-0 ml-2">{formatDate(request.createdDate)}</span>
         </div>
         
         {request.supportProvider && (
-          <div className="mt-1 pt-1 border-t border-gray-100">
+          <div className="pt-2 border-t border-gray-100">
             <div className="text-xs text-gray-500">
               <span className="font-medium">Destek:</span> {request.supportProvider.firstName} {request.supportProvider.lastName}
             </div>
           </div>
         )}
         
-        <div className="mt-1 text-xs text-indigo-600 font-medium">
-          Cevap ver →
-        </div>
+        {/* Mobile-friendly Action Button */}
+        <button
+          onClick={() => onViewRequest(request)}
+          className="w-full mt-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium py-2 px-3 rounded-lg transition-colors duration-200 touch-manipulation"
+        >
+          Cevap Ver →
+        </button>
       </div>
     </div>
   );
@@ -146,19 +174,19 @@ const StatusColumn = ({ status, requests, requestTypes, requestStatuses, onViewR
   return (
     <div 
       ref={setNodeRef}
-      className={`bg-gray-50 rounded-lg p-3 min-h-[500px] transition-colors duration-200 ${
+      className={`bg-gray-50 rounded-lg p-3 sm:p-4 min-h-[300px] sm:min-h-[500px] transition-colors duration-200 ${
         isOver ? 'bg-blue-50 border-2 border-blue-300' : ''
       }`}
     >
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-900">{status.name}</h3>
-        <span className="bg-gray-200 text-gray-700 text-xs font-medium px-2 py-1 rounded-full">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">{status.name}</h3>
+        <span className="bg-gray-200 text-gray-700 text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ml-2">
           {requests.length}
         </span>
       </div>
       
       <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-        <div className="space-y-2 min-h-[400px]">
+        <div className="space-y-3 sm:space-y-2 min-h-[250px] sm:min-h-[400px]">
           {requests.map((request) => (
             <SortableRequestCard 
               key={request.id} 
@@ -169,9 +197,14 @@ const StatusColumn = ({ status, requests, requestTypes, requestStatuses, onViewR
             />
           ))}
           {requests.length === 0 && (
-            <div className={`text-center py-6 text-gray-400 text-xs border-2 border-dashed rounded-lg transition-colors duration-200 ${
+            <div className={`text-center py-8 sm:py-6 text-gray-400 text-xs border-2 border-dashed rounded-lg transition-colors duration-200 ${
               isOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300'
             }`}>
+              <div className="mb-2">
+                <svg className="w-8 h-8 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
               Bu durumda talep bulunmuyor
               <br />
               <span className="text-xs">Talepleri buraya sürükleyin</span>
@@ -213,7 +246,17 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
   });
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Minimum distance to start drag
+      },
+    }),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 100, // Delay for touch devices
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -359,23 +402,23 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
   }
 
   return (
-    <div className="p-4">
-      <div className="mb-4">
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Talep Yöntemi</h2>
-        <p className="text-sm text-gray-600">Talepleri sürükleyip bırakarak durumlarını değiştirebilirsiniz</p>
+    <div className="p-3 sm:p-4">
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">Talep Yöntemi</h2>
+        <p className="text-xs sm:text-sm text-gray-600">Talepleri sürükleyip bırakarak durumlarını değiştirebilirsiniz</p>
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-3 sm:px-4 py-3 rounded text-sm">
           {error}
         </div>
       )}
 
-      {/* Filters */}
-      <div className="bg-white p-3 rounded-lg shadow mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* Mobile-optimized Filters */}
+      <div className="bg-white p-3 sm:p-4 rounded-lg shadow mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Arama
             </label>
             <input
@@ -383,18 +426,18 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
               value={filters.search}
               onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
               placeholder="Talep açıklamasında ara..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 touch-manipulation"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Talep Türü
             </label>
             <select
               value={filters.typeId}
               onChange={(e) => setFilters(prev => ({ ...prev, typeId: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 touch-manipulation"
             >
               <option value="">Tüm Türler</option>
               {requestTypes.map((type) => (
@@ -407,14 +450,15 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
         </div>
       </div>
 
-      {/* Kanban Board */}
+      {/* Mobile-optimized Kanban Board */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="kanban-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-3">
+        {/* Mobile: Single column, Desktop: Multiple columns */}
+        <div className="kanban-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
           {requestsByStatus.map((statusData) => (
             <StatusColumn
               key={statusData.id}
@@ -429,8 +473,8 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
         
         <DragOverlay>
           {activeId ? (
-            <div className="bg-white rounded-lg shadow-lg border-l-4 border-indigo-500 border border-gray-200 p-4 cursor-move opacity-90 transform rotate-2">
-              <div className="text-sm font-medium text-gray-900">
+            <div className="bg-white rounded-lg shadow-lg border-l-4 border-indigo-500 border border-gray-200 p-3 sm:p-4 cursor-move opacity-90 transform rotate-2 max-w-xs">
+              <div className="text-sm font-medium text-gray-900 line-clamp-2">
                 {requests.find(req => req.id === activeId)?.description}
               </div>
             </div>
@@ -438,7 +482,40 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
         </DragOverlay>
       </DndContext>
 
-
+      {/* Mobile Help Text */}
+      <div className="mt-4 sm:hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <svg className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div className="text-sm text-blue-800">
+            <p className="font-semibold mb-2">📱 Mobil Kullanım Rehberi:</p>
+            <div className="space-y-2">
+              <div className="flex items-start space-x-2">
+                <span className="text-blue-600 font-bold">1.</span>
+                <div>
+                  <p className="font-medium">Sürükleme:</p>
+                  <p className="text-xs">Kartın sağ üst köşesindeki çizgili icon'a dokunup basılı tutun, sonra farklı sütuna sürükleyin</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="text-blue-600 font-bold">2.</span>
+                <div>
+                  <p className="font-medium">Detay Görünümü:</p>
+                  <p className="text-xs">"Cevap Ver" butonuna dokunarak talep detaylarına geçin</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="text-blue-600 font-bold">3.</span>
+                <div>
+                  <p className="font-medium">Durum Değiştirme:</p>
+                  <p className="text-xs">Kartları farklı renkli sütunlara sürükleyerek durumlarını güncelleyin</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
