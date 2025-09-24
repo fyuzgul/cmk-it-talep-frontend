@@ -88,6 +88,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
     try {
       const responses = await getRequestResponsesByRequestId(requestId);
       
+      
       // API'den gelen veriyi düzelt - "null" string'leri gerçek null'a çevir
       const cleanedResponses = responses?.map(response => {
         const cleaned = {
@@ -767,16 +768,16 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                       <div>
                         <div className="flex items-center space-x-3">
                           <h3 className="text-xl font-bold text-gray-900">Talep #{selectedRequest.id}</h3>
-                          {isUserOnline(selectedRequest.requestCreator?.id) && (
-                            <div className="flex items-center space-x-1">
-                              <span className="text-sm text-gray-600 font-medium">
-                                {selectedRequest.requestCreator?.firstName} {selectedRequest.requestCreator?.lastName}
-                              </span>
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="text-sm text-green-600 font-medium">çevrimiçi</span>
-                            </div>
-                          )}
                         </div>
+                        {isUserOnline(selectedRequest.requestCreator?.id) && (
+                          <div className="flex items-center space-x-1 mt-1">
+                            <span className="text-sm text-gray-600 font-medium">
+                              {selectedRequest.requestCreator?.firstName} {selectedRequest.requestCreator?.lastName}
+                            </span>
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm text-green-600 font-medium">çevrimiçi</span>
+                          </div>
+                        )}
                         <div className="flex items-center space-x-3 mt-1">
                           <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full shadow-sm ${getStatusBadgeColor(selectedRequest.requestStatusId)}`}>
                             {getStatusName(selectedRequest.requestStatusId)}
@@ -845,15 +846,16 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                       
                       {/* Günün mesajları */}
                       {group.messages.map((response) => {
-                        const isFromSupport = response.senderId !== selectedRequest.requestCreator?.id;
                         const isFromCurrentUser = response.senderId === user?.id;
+                        const isFromSupport = !isFromCurrentUser && response.senderId !== selectedRequest.requestCreator?.id;
+                        
                         
                         return (
-                          <div key={response.id} className={`flex ${isFromSupport ? 'justify-end' : 'justify-start'} mb-2`}>
+                          <div key={response.id} className={`flex ${isFromCurrentUser ? 'justify-end' : 'justify-start'} mb-2`}>
                             <div className="max-w-[70%]">
                               <div 
                                 className={`rounded-lg p-1.5 cursor-pointer transition-all duration-200 hover:shadow-sm ${
-                                  isFromSupport 
+                                  isFromCurrentUser 
                                     ? 'bg-[#005c4b] text-white' 
                                     : `bg-[#2a2f32] text-[#e9edef] ${!response.isRead ? 'ring-1 ring-blue-400' : ''}`
                                 }`}
@@ -861,10 +863,24 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                               >
                                 <div className="flex items-center justify-between mb-1">
                                   <div className="flex items-center space-x-1">
-                                    <p className={`text-xs font-medium ${isFromSupport ? 'text-white' : 'text-[#e9edef]'}`}>
-                                      {isFromSupport ? 'Destek' : (isFromCurrentUser ? 'Sen' : `${selectedRequest.requestCreator?.firstName} ${selectedRequest.requestCreator?.lastName}`)}
+                                    <p className={`text-xs font-medium ${isFromCurrentUser ? 'text-white' : 'text-[#e9edef]'}`}>
+                                      {(() => {
+                                        if (isFromCurrentUser) {
+                                          return 'Sen';
+                                        }
+                                        
+                        // Sender name logic - use sender object from API response
+                        const senderName = response.senderName;
+                        const senderFirstName = response.sender?.firstName;
+                        const senderLastName = response.sender?.lastName;
+                        const requestCreatorFirstName = selectedRequest.requestCreator?.firstName;
+                        const requestCreatorLastName = selectedRequest.requestCreator?.lastName;
+                        
+                        // Use sender object from API response (lowercase 's')
+                        return senderName || (response.sender ? `${senderFirstName} ${senderLastName}` : `${requestCreatorFirstName} ${requestCreatorLastName}`);
+                                      })()}
                                     </p>
-                                    <p className={`text-xs ${isFromSupport ? 'text-green-100' : 'text-[#8696a0]'}`}>
+                                    <p className={`text-xs ${isFromCurrentUser ? 'text-green-100' : 'text-[#8696a0]'}`}>
                                       {formatTime(response.createdDate)}
                                     </p>
                                   </div>
@@ -887,7 +903,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                                     )}
                                   </div>
                                 </div>
-                                <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isFromSupport ? 'text-white' : 'text-[#e9edef]'}`}>
+                                <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isFromCurrentUser ? 'text-white' : 'text-[#e9edef]'}`}>
                                   {response.message}
                                 </p>
                                 {(response.filePath || response.fileBase64) && (
@@ -961,13 +977,10 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                         className="w-12 h-12 bg-[#00a884] text-white rounded-full hover:bg-[#008069] focus:outline-none focus:ring-2 focus:ring-[#00a884] disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-all duration-200 disabled:transform-none flex items-center justify-center"
                       >
                         {responseLoading ? (
-                          <div className="flex items-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Gönderiliyor...
-                          </div>
+                          <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
                         ) : (
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

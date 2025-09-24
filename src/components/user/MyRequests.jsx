@@ -248,8 +248,66 @@ const MyRequests = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-red"></div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+          {/* Header Loading */}
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              <div>
+                <div className="h-8 bg-gray-200 rounded-lg w-64 mb-2 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-96 animate-pulse"></div>
+              </div>
+              <div className="h-10 bg-gray-200 rounded-lg w-32 animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Filters Loading */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mb-6">
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                    <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Content Loading */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="p-4 sm:p-6">
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
+                      <div className="flex-1 min-w-0">
+                        <div className="h-6 bg-gray-200 rounded w-3/4 mb-4 animate-pulse"></div>
+                        <div className="space-y-2 mb-4">
+                          <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/3 animate-pulse"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
+                          <div className="space-y-1">
+                            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                            <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-row lg:flex-col items-start lg:items-end space-x-2 lg:space-x-0 lg:space-y-2">
+                        <div className="h-6 bg-gray-200 rounded-full w-16 animate-pulse"></div>
+                        <div className="h-6 bg-gray-200 rounded-full w-20 animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
