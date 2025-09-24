@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRequests } from '../../hooks/useRequests';
+import { useSupport } from '../../hooks/useSupport';
 import { usePriorityLevels } from '../../hooks/usePriorityLevels';
 import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, formatFileSize } from '../../utils/fileUtils';
 import Base64FileViewer from '../common/Base64FileViewer';
@@ -10,9 +11,15 @@ const CreateRequest = ({ onRequestCreated }) => {
   const { 
     requestTypes, 
     createRequest, 
+    getRequestTypesBySupportType,
     loading, 
     error 
   } = useRequests();
+
+  const { 
+    supportTypes,
+    loading: supportLoading 
+  } = useSupport();
 
   const { 
     priorityLevels, 
@@ -20,6 +27,7 @@ const CreateRequest = ({ onRequestCreated }) => {
   } = usePriorityLevels();
 
   const [formData, setFormData] = useState({
+    supportTypeId: '',
     requestTypeId: '',
     priorityLevelId: '',
     description: '',
@@ -29,18 +37,46 @@ const CreateRequest = ({ onRequestCreated }) => {
     screenshotMimeType: null
   });
 
+  const [filteredRequestTypes, setFilteredRequestTypes] = useState([]);
+  const [isLoadingRequestTypes, setIsLoadingRequestTypes] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   // fetchSupportTypes hook'un kendi useEffect'inde çağrılıyor
 
-  const handleInputChange = (e) => {
+  const handleInputChange = async (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'supportTypeId') {
+      // Support type değiştiğinde request type'ları filtrele
+      setFormData(prev => ({
+        ...prev,
+        supportTypeId: value,
+        requestTypeId: '' // Request type'ı sıfırla
+      }));
+      
+      if (value) {
+        try {
+          setIsLoadingRequestTypes(true);
+          const requestTypes = await getRequestTypesBySupportType(parseInt(value));
+          setFilteredRequestTypes(requestTypes);
+        } catch (error) {
+          console.error('Error fetching request types:', error);
+          setFilteredRequestTypes([]);
+        } finally {
+          setIsLoadingRequestTypes(false);
+        }
+      } else {
+        setFilteredRequestTypes([]);
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleFileChange = async (e) => {
@@ -99,6 +135,7 @@ const CreateRequest = ({ onRequestCreated }) => {
       await createRequest(requestData);
       setSubmitSuccess(true);
       setFormData({
+        supportTypeId: '',
         requestTypeId: '',
         priorityLevelId: '',
         description: '',
@@ -107,6 +144,8 @@ const CreateRequest = ({ onRequestCreated }) => {
         screenshotFileName: null,
         screenshotMimeType: null
       });
+      setFilteredRequestTypes([]);
+      setIsLoadingRequestTypes(false);
       
       // Callback ile parent component'i bilgilendir
       if (onRequestCreated) {
@@ -119,7 +158,7 @@ const CreateRequest = ({ onRequestCreated }) => {
     }
   };
 
-  if (loading || priorityLoading) {
+  if (loading || priorityLoading || supportLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-red"></div>
@@ -145,6 +184,28 @@ const CreateRequest = ({ onRequestCreated }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Destek Türü */}
+          <div>
+            <label htmlFor="supportTypeId" className="block text-sm font-medium text-primary-dark mb-2">
+              Destek Türü *
+            </label>
+            <select
+              id="supportTypeId"
+              name="supportTypeId"
+              value={formData.supportTypeId}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
+            >
+              <option value="">Destek türü seçin</option>
+              {supportTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Talep Türü */}
           <div>
             <label htmlFor="requestTypeId" className="block text-sm font-medium text-primary-dark mb-2">
@@ -156,10 +217,18 @@ const CreateRequest = ({ onRequestCreated }) => {
               value={formData.requestTypeId}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
+              disabled={!formData.supportTypeId || isLoadingRequestTypes}
+              className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
-              <option value="">Talep türü seçin</option>
-              {requestTypes.map((type) => (
+              <option value="">
+                {isLoadingRequestTypes 
+                  ? "Yükleniyor..." 
+                  : formData.supportTypeId 
+                    ? "Talep türü seçin" 
+                    : "Önce destek türü seçin"
+                }
+              </option>
+              {filteredRequestTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name}
                 </option>

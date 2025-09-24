@@ -71,6 +71,17 @@ export const useRequests = () => {
     }
   };
 
+  const getRequestTypesBySupportType = async (supportTypeId) => {
+    try {
+      setError(null);
+      const data = await requestService.getRequestTypesBySupportType(supportTypeId);
+      return data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Talep türleri yüklenirken bir hata oluştu');
+      throw err;
+    }
+  };
+
   // Request Statuses
   const fetchRequestStatuses = async () => {
     try {
@@ -247,6 +258,7 @@ export const useRequests = () => {
     createRequestType,
     updateRequestType,
     deleteRequestType,
+    getRequestTypesBySupportType,
     
     // Request Statuses
     requestStatuses,

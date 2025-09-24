@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, formatFileSize } from '../../utils/fileUtils';
 import Base64FileViewer from '../common/Base64FileViewer';
 import ErrorBoundary from '../common/ErrorBoundary';
+import api from '../../services/api';
 
 const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const { user } = useAuth();
@@ -45,6 +46,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [messagesEndRef, setMessagesEndRef] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [screenshotData, setScreenshotData] = useState(null);
 
   // Support kullanıcısının taleplerini yükle
   const loadSupportRequests = useCallback(async () => {
@@ -120,6 +122,32 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
       toast.error('Cevaplar yüklenirken bir hata oluştu.');
     }
   }, [getRequestResponsesByRequestId, markConversationAsRead]);
+
+  // Screenshot verisini yükle
+  const loadScreenshotData = useCallback(async (request) => {
+    if (!request.screenshotFilePath) {
+      setScreenshotData(null);
+      return;
+    }
+
+    try {
+      // API endpoint'ini kullanarak screenshot'ı çek
+      const response = await api.get(`/File/request/${request.id}/screenshot`);
+      
+      setScreenshotData({
+        base64Data: response.data.base64Data || response.data.fileBase64,
+        fileName: response.data.fileName || request.screenshotFilePath.split('/').pop(),
+        mimeType: response.data.mimeType || response.data.fileMimeType || 'image/jpeg'
+      });
+    } catch (error) {
+      // Fallback: filePath'i direkt kullan
+      setScreenshotData({
+        filePath: request.screenshotFilePath,
+        fileName: request.screenshotFilePath.split('/').pop(),
+        mimeType: 'image/jpeg'
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (user?.id) {
@@ -384,6 +412,10 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const handleRequestSelect = async (request) => {
     setSelectedRequest(request);
     await loadRequestResponses(request.id);
+    
+    // Screenshot verisini yükle
+    await loadScreenshotData(request);
+    
     setResponseForm({
       message: '',
       filePath: '',
@@ -815,19 +847,16 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                           </p>
                         </div>
                         <p className="text-[#e9edef] text-sm whitespace-pre-wrap leading-relaxed">{selectedRequest.description}</p>
-                        {selectedRequest.screenshotFilePath && (
+                        {screenshotData && (
                           <div className="mt-2">
-                            <a 
-                              href={selectedRequest.screenshotFilePath} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-2 py-1 bg-[#1f2937] text-[#e9edef] rounded text-xs hover:bg-[#374151] transition-colors duration-200"
-                            >
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                              </svg>
-                              Ekran Görüntüsü
-                            </a>
+                            <Base64FileViewer
+                              base64Data={screenshotData.base64Data}
+                              filePath={screenshotData.filePath}
+                              fileName={screenshotData.fileName}
+                              mimeType={screenshotData.mimeType}
+                              className="max-w-sm"
+                              showDownload={true}
+                            />
                           </div>
                         )}
                       </div>

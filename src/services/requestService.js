@@ -65,6 +65,12 @@ export const requestService = {
     return response.data;
   },
 
+  // Get request types by support type
+  getRequestTypesBySupportType: async (supportTypeId) => {
+    const response = await api.get(`/RequestType/supporttype/${supportTypeId}`);
+    return response.data;
+  },
+
   // Request Management
   getRequests: async (params = {}) => {
     // Console log removed

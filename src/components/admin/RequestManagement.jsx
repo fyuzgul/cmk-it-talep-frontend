@@ -127,9 +127,24 @@ const RequestManagement = () => {
     if (window.confirm('Bu talebi silmek istediğinizden emin misiniz?')) {
       try {
         await deleteRequest(id);
-        await loadRequests();
+        // Refresh the requests list
+        const params = {
+          ...filters,
+          page: currentPage,
+          pageSize: pageSize
+        };
+        
+        // Remove empty filters
+        Object.keys(params).forEach(key => {
+          if (params[key] === '' || params[key] === null || params[key] === undefined) {
+            delete params[key];
+          }
+        });
+
+        await fetchRequests(params);
       } catch (error) {
-        // Error deleting request - silent fail
+        console.error('Error deleting request:', error);
+        alert('Talep silinirken bir hata oluştu. Lütfen tekrar deneyin.');
       }
     }
   };
@@ -360,8 +375,19 @@ const RequestManagement = () => {
           ) : (
             <div className="grid gap-4 sm:gap-6">
               {filteredRequests.map((request) => (
-                <div key={request.id} className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-lg transition-all duration-200 hover:border-gray-300">
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
+                <div key={request.id} className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-lg transition-all duration-200 hover:border-gray-300 relative">
+                  {/* Silme Butonu */}
+                  <button
+                    onClick={() => handleDeleteRequest(request.id)}
+                    className="absolute top-3 right-3 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                    title="Talebi Sil"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                  
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0 pr-8">
                     <div className="flex-1 min-w-0">
                       {/* Talep Açıklaması */}
                       <div className="mb-4">
