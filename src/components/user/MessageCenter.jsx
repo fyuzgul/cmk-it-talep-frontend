@@ -30,6 +30,7 @@ const MessageCenter = () => {
     fileMimeType: null
   });
   const [responseLoading, setResponseLoading] = useState(false);
+  const [sendingMessages, setSendingMessages] = useState(new Set());
   const [isUploading, setIsUploading] = useState(false);
   const [messagesEndRef, setMessagesEndRef] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -408,11 +409,79 @@ const MessageCenter = () => {
     }
   };
 
+  // Mesaj parametresi ile cevap gönderme (Enter tuşu için)
+  const handleSendResponseWithMessage = async (messageToSend) => {
+    if (!messageToSend || !selectedRequest) return;
+    
+    const messageId = Date.now().toString();
+    setSendingMessages(prev => new Set([...prev, messageId]));
+    
+    try {
+      const responseData = {
+        message: messageToSend,
+        filePath: responseForm.filePath || null, // Backward compatibility
+        fileBase64: responseForm.fileBase64,
+        fileName: responseForm.fileName,
+        fileMimeType: responseForm.fileMimeType,
+        requestId: selectedRequest.id,
+        senderId: user?.id,
+        isDeleted: false
+      };
+      
+      await createRequestResponse(responseData);
+      
+      // SignalR ile mesajı gönder (gerçek zamanlı güncelleme için)
+      if (signalrService.isConnected) {
+        try {
+          await signalrService.sendMessageToGroup(`Request_${selectedRequest.id}`, {
+            RequestId: selectedRequest.id,
+            Message: messageToSend,
+            SenderId: user?.id,
+            UserId: user?.id,
+            SenderName: user?.firstName && user?.lastName 
+              ? `${user.firstName} ${user.lastName}` 
+              : user?.firstName || 'Kullanıcı',
+            CreatedDate: new Date().toISOString(),
+            Timestamp: new Date().toISOString()
+          });
+        } catch (signalrError) {
+          // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
+        }
+      }
+      
+      // Cevapları yeniden yükle
+      await loadRequestResponses(selectedRequest.id);
+      
+      toast.success('Cevabınız başarıyla gönderildi.');
+    } catch (error) {
+      toast.error('Cevap gönderilirken bir hata oluştu.');
+    } finally {
+      setSendingMessages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(messageId);
+        return newSet;
+      });
+    }
+  };
+
   // Enter tuşu ile gönder
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendResponse();
+      // Mesajı hemen temizle
+      const messageToSend = responseForm.message.trim();
+      if (messageToSend && selectedRequest) {
+        setResponseForm({
+          message: '',
+          filePath: '',
+          selectedFile: null,
+          fileBase64: null,
+          fileName: null,
+          fileMimeType: null
+        });
+        // Mesajı gönder
+        handleSendResponseWithMessage(messageToSend);
+      }
     }
   };
 
@@ -797,9 +866,19 @@ const MessageCenter = () => {
                                     )}
                                   </div>
                                 </div>
-                                <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isFromCurrentUser ? 'text-white' : 'text-[#e9edef]'}`}>
-                                  {response.message}
-                                </p>
+                                <div className="flex items-center space-x-2">
+                                  <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isFromCurrentUser ? 'text-white' : 'text-[#e9edef]'}`}>
+                                    {response.message}
+                                  </p>
+                                  {sendingMessages.has(response.id?.toString()) && (
+                                    <div className="flex items-center">
+                                      <svg className="animate-spin h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
                                 {(response.filePath || response.fileBase64) && (
                                   <div className="mt-1">
                                     <ErrorBoundary>
@@ -867,19 +946,12 @@ const MessageCenter = () => {
                       {/* Gönderme Butonu */}
                       <button
                         onClick={handleSendResponse}
-                        disabled={!responseForm.message.trim() || responseLoading}
+                        disabled={!responseForm.message.trim()}
                         className="w-12 h-12 bg-[#00a884] text-white rounded-full hover:bg-[#008069] focus:outline-none focus:ring-2 focus:ring-[#00a884] disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-all duration-200 disabled:transform-none flex items-center justify-center"
                       >
-                        {responseLoading ? (
-                          <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                          </svg>
-                        )}
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
                       </button>
                     </div>
 
