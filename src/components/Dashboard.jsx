@@ -17,6 +17,7 @@ import MyRequests from './user/MyRequests';
 import MessageCenter from './user/MessageCenter';
 import SupportKanbanBoard from './support/SupportKanbanBoard';
 import MessageManagement from './support/MessageManagement';
+import InventoryList from './admin/InventoryList';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -179,6 +180,8 @@ const Dashboard = () => {
         return <UserManagement />;
       case 'priorityLevels':
         return <PriorityLevelManagement />;
+      case 'inventory':
+        return <InventoryList />;
       
       // User tabs
       case 'createRequest':
@@ -193,6 +196,8 @@ const Dashboard = () => {
         return <SupportKanbanBoard onRequestSelect={setSelectedRequestId} onTabChange={setActiveTab} />;
       case 'messageManagement':
         return <MessageManagement selectedRequestId={selectedRequestId} onRequestSelected={setSelectedRequestId} />;
+      case 'inventory':
+        return <InventoryList />;
       
       // Test panelleri (herkes için)
       
@@ -470,6 +475,26 @@ const Dashboard = () => {
                           </svg>
                         </div>
                       </button>
+
+                      <button
+                        onClick={() => setActiveTab('inventory')}
+                        className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-teal-200 group text-left"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="bg-teal-50 group-hover:bg-teal-100 rounded-xl p-4 transition-colors">
+                            <svg className="w-7 h-7 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                            </svg>
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">Envanter Yönetimi</h3>
+                            <p className="text-sm text-gray-600 mt-1">Bilgisayar envanterini yönet</p>
+                          </div>
+                          <svg className="w-5 h-5 text-gray-400 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </button>
                     </div>
 
                   </div>
@@ -520,7 +545,7 @@ const Dashboard = () => {
                 )}
                 {isSupport && (
                   <div className="flex justify-center">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl w-full">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full">
                       <button
                         onClick={() => setActiveTab('kanbanBoard')}
                         className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-red-200 group text-center"
@@ -545,6 +570,19 @@ const Dashboard = () => {
                         </div>
                         <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">Mesaj Yönetimi</h3>
                         <p className="text-sm text-gray-600 mt-2">Mesajları yönetin</p>
+                      </button>
+
+                      <button
+                        onClick={() => setActiveTab('inventory')}
+                        className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-teal-200 group text-center"
+                      >
+                        <div className="bg-teal-50 group-hover:bg-teal-100 rounded-xl p-4 w-16 h-16 mx-auto mb-4 transition-colors">
+                          <svg className="w-8 h-8 text-teal-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">Envanter Yönetimi</h3>
+                        <p className="text-sm text-gray-600 mt-2">Bilgisayar envanterini yönet</p>
                       </button>
                     </div>
                   </div>
@@ -752,6 +790,19 @@ const Dashboard = () => {
                   >
                     Öncelik Seviyesi Yönetimi
                   </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('inventory');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === 'inventory'
+                        ? 'bg-primary-red-100 text-primary-red'
+                        : 'text-primary-dark hover:bg-primary-red-50'
+                    }`}
+                  >
+                    Envanter Yönetimi
+                  </button>
                 </>
               )}
               
@@ -826,6 +877,19 @@ const Dashboard = () => {
                     }`}
                   >
                     Mesaj Yönetimi
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('inventory');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === 'inventory'
+                        ? 'bg-primary-red-100 text-primary-red'
+                        : 'text-primary-dark hover:bg-primary-red-50'
+                    }`}
+                  >
+                    Envanter Yönetimi
                   </button>
                 </>
               )}
