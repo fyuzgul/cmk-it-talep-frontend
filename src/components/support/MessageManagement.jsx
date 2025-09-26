@@ -238,7 +238,8 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                     message: message.Message,
                     senderId: message.SenderId || message.UserId,
                     createdDate: message.CreatedDate || message.Timestamp,
-                    isRead: false
+                    isOwnMessage: message.IsOwnMessage || false,
+                    isReadByCurrentUser: message.IsReadByCurrentUser || false
                   }]
                 }
               : req
@@ -269,8 +270,47 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
       setOnlineUsers(userIds);
     };
 
+    const handleConversationRead = (data) => {
+      // Konuşma okundu olarak işaretlendi
+      console.log('DEBUG Frontend: ConversationRead received for request:', data.RequestId);
+      console.log('DEBUG Frontend: Current selected request:', selectedRequest?.id);
+      console.log('DEBUG Frontend: Support is in chat:', data.RequestId === selectedRequest?.id);
+      
+      // Eğer bu sohbet seçili ise (support bu chat'te aktif), mesajları yeniden yükle
+      if (data.RequestId === selectedRequest?.id) {
+        console.log('DEBUG Frontend: Support is in this chat, updating messages...');
+        loadRequestResponses(selectedRequest.id);
+        
+        // RequestResponses state'ini de güncelle
+        setRequestResponses(prev => 
+          prev.map(r => 
+            r.senderId === user?.id 
+              ? { ...r, isReadByCurrentUser: true } // Kendi mesajlarını mavi tik ile güncelle
+              : r
+          )
+        );
+      }
+      
+      // Support requests listesini güncelle (tüm sohbetler için)
+      setSupportRequests(prev => 
+        prev.map(req => 
+          req.id === data.RequestId 
+            ? { 
+                ...req, 
+                requestResponses: req.requestResponses?.map(r => 
+                  r.senderId !== user?.id 
+                    ? { ...r, isRead: true, readAt: new Date().toISOString() }
+                    : { ...r, isReadByCurrentUser: true } // Kendi mesajlarını mavi tik ile güncelle
+                ) || []
+              }
+            : req
+        )
+      );
+    };
+
     // SignalR service'ten mesaj dinleme
     signalrService.on('message:new', handleNewMessage);
+    signalrService.on('conversation:read', handleConversationRead);
     signalrService.on('user:online', handleUserOnline);
     signalrService.on('user:offline', handleUserOffline);
     signalrService.on('online:users', handleOnlineUsers);
@@ -282,6 +322,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
 
     return () => {
       signalrService.off('message:new', handleNewMessage);
+      signalrService.off('conversation:read', handleConversationRead);
       signalrService.off('user:online', handleUserOnline);
       signalrService.off('user:offline', handleUserOffline);
       signalrService.off('online:users', handleOnlineUsers);
@@ -445,25 +486,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
     // Tüm konuşmayı okundu işaretle
     try {
       await markConversationAsRead(request.id);
-      
-      // Mesajları yeniden yükle
-      await loadRequestResponses(request.id);
-      
-      // Support requests listesini de güncelle
-      setSupportRequests(prev => 
-        prev.map(req => 
-          req.id === request.id 
-            ? { 
-                ...req, 
-                requestResponses: req.requestResponses?.map(r => 
-                  r.senderId !== user?.id 
-                    ? { ...r, isRead: true, readAt: new Date().toISOString() }
-                    : r
-                ) || []
-              }
-            : req
-        )
-      );
+      // SignalR ile otomatik olarak güncellenecek, manuel yükleme gerekmez
     } catch (error) {
       // Console log removed
     }
@@ -675,9 +698,10 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
     }
   };
 
-  // Mesaj tıklama - okundu işaretleme
+  // Mesaj tıklama - okundu işaretleme (sadece kendi mesajları için)
   const handleMessageClick = async (response) => {
-    if (!response.isRead && response.senderId !== user?.id) {
+    // Sadece kendi mesajları için okundu işaretleme yapılabilir
+    if (response.senderId === user?.id && !response.isReadByCurrentUser) {
       try {
         await markAsRead(response.id);
         // Mesajları yeniden yükle
@@ -688,11 +712,11 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
     }
   };
 
-  // Okunmamış mesaj sayısını hesapla
+  // Okunmamış mesaj sayısını hesapla (karşı tarafın mesajları için)
   const getUnreadCount = (request) => {
     if (!request.requestResponses) return 0;
     return request.requestResponses.filter(response => 
-      !response.isRead && response.senderId !== user?.id
+      response.senderId !== user?.id && !response.isRead
     ).length;
   };
 
@@ -987,24 +1011,31 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                                       {formatTime(response.createdDate)}
                                     </p>
                                   </div>
-                                  <div className="flex items-center space-x-1">
-                                    {response.isRead ? (
-                                      <div className="flex items-center">
-                                        <svg className="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                                        </svg>
-                                        <svg className="w-3 h-3 -ml-1 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                                        </svg>
-                                      </div>
-                                    ) : (
-                                      <div className="flex items-center">
-                                        <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                                        </svg>
-                                      </div>
-                                    )}
-                                  </div>
+                                  {/* Sadece kendi mesajlarında mavi tik göster */}
+                                  {isFromCurrentUser && (
+                                    <div className="flex items-center space-x-1">
+                                      {response.isReadByCurrentUser ? (
+                                        <div className="flex items-center">
+                                          <svg className="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                          </svg>
+                                          <svg className="w-3 h-3 -ml-1 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                          </svg>
+                                        </div>
+                                      ) : (
+                                        <div className="flex items-center">
+                                          {/* Çift gri tik - gönderildi ama okunmadı */}
+                                          <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                          </svg>
+                                          <svg className="w-3 h-3 -ml-1 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                          </svg>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isFromCurrentUser ? 'text-white' : 'text-[#e9edef]'}`}>
