@@ -167,6 +167,26 @@ export const commonAPI = {
     const response = await api.get('/UserType');
     return response.data;
   },
+
+  getPriorityLevels: async () => {
+    const response = await api.get('/PriorityLevel');
+    return response.data;
+  },
+
+  createPriorityLevel: async (priorityLevelData) => {
+    const response = await api.post('/PriorityLevel', priorityLevelData);
+    return response.data;
+  },
+
+  updatePriorityLevel: async (id, priorityLevelData) => {
+    const response = await api.put(`/PriorityLevel/${id}`, priorityLevelData);
+    return response.data;
+  },
+
+  deletePriorityLevel: async (id) => {
+    await api.delete(`/PriorityLevel/${id}`);
+    return true;
+  },
 };
 
 export default api;

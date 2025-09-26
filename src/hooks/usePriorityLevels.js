@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import priorityLevelService from '../services/priorityLevelService';
+import { commonAPI } from '../services/api';
 
 export const usePriorityLevels = () => {
   const [priorityLevels, setPriorityLevels] = useState([]);
@@ -10,7 +10,7 @@ export const usePriorityLevels = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await priorityLevelService.getAll();
+      const data = await commonAPI.getPriorityLevels();
       setPriorityLevels(data);
     } catch (err) {
       setError(err.message);
@@ -26,7 +26,7 @@ export const usePriorityLevels = () => {
 
   const createPriorityLevel = async (priorityLevelData) => {
     try {
-      const newPriorityLevel = await priorityLevelService.create(priorityLevelData);
+      const newPriorityLevel = await commonAPI.createPriorityLevel(priorityLevelData);
       setPriorityLevels(prev => [...prev, newPriorityLevel]);
       return newPriorityLevel;
     } catch (err) {
@@ -37,7 +37,7 @@ export const usePriorityLevels = () => {
 
   const updatePriorityLevel = async (id, priorityLevelData) => {
     try {
-      const updatedPriorityLevel = await priorityLevelService.update(id, priorityLevelData);
+      const updatedPriorityLevel = await commonAPI.updatePriorityLevel(id, priorityLevelData);
       setPriorityLevels(prev => 
         prev.map(level => level.id === id ? updatedPriorityLevel : level)
       );
@@ -50,7 +50,7 @@ export const usePriorityLevels = () => {
 
   const deletePriorityLevel = async (id) => {
     try {
-      await priorityLevelService.delete(id);
+      await commonAPI.deletePriorityLevel(id);
       setPriorityLevels(prev => prev.filter(level => level.id !== id));
     } catch (err) {
       setError(err.message);

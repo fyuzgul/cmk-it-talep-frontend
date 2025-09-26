@@ -23,7 +23,8 @@ const CreateRequest = ({ onRequestCreated }) => {
 
   const { 
     priorityLevels, 
-    loading: priorityLoading 
+    loading: priorityLoading,
+    error: priorityError
   } = usePriorityLevels();
 
   const [formData, setFormData] = useState({
@@ -180,6 +181,12 @@ const CreateRequest = ({ onRequestCreated }) => {
         {submitError && (
           <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
             {submitError}
+          </div>
+        )}
+
+        {priorityError && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            Öncelik seviyeleri yüklenirken hata oluştu: {priorityError}
           </div>
         )}
 

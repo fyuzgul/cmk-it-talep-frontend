@@ -1,112 +1,47 @@
-const API_BASE_URL = 'https://localhost:7097/api';
+import api from './api';
 
 class PriorityLevelService {
   async getAll() {
     try {
-      const response = await fetch(`${API_BASE_URL}/PriorityLevel`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      const response = await api.get('/PriorityLevel');
+      return response.data;
     } catch (error) {
-      // Console log removed
       throw error;
     }
   }
 
   async getById(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/PriorityLevel/${id}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      const response = await api.get(`/PriorityLevel/${id}`);
+      return response.data;
     } catch (error) {
-      // Console log removed
       throw error;
     }
   }
 
   async create(priorityLevel) {
     try {
-      const response = await fetch(`${API_BASE_URL}/PriorityLevel`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(priorityLevel)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      const response = await api.post('/PriorityLevel', priorityLevel);
+      return response.data;
     } catch (error) {
-      // Console log removed
       throw error;
     }
   }
 
   async update(id, priorityLevel) {
     try {
-      const response = await fetch(`${API_BASE_URL}/PriorityLevel/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(priorityLevel)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      const response = await api.put(`/PriorityLevel/${id}`, priorityLevel);
+      return response.data;
     } catch (error) {
-      // Console log removed
       throw error;
     }
   }
 
   async delete(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/PriorityLevel/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
+      await api.delete(`/PriorityLevel/${id}`);
       return true;
     } catch (error) {
-      // Console log removed
       throw error;
     }
   }
