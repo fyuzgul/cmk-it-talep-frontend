@@ -439,10 +439,21 @@ const MessageCenter = () => {
   const handleSendResponse = async () => {
     if (!responseForm.message.trim() || !selectedRequest) return;
     
+    // Formu hemen temizle - mesaj gönderilir gönderilmez
+    const messageToSend = responseForm.message.trim();
+    setResponseForm({
+      message: '',
+      filePath: '',
+      selectedFile: null,
+      fileBase64: null,
+      fileName: null,
+      fileMimeType: null
+    });
+    
     try {
       setResponseLoading(true);
       const responseData = {
-        message: responseForm.message.trim(),
+        message: messageToSend,
         filePath: responseForm.filePath || null, // Backward compatibility
         fileBase64: responseForm.fileBase64,
         fileName: responseForm.fileName,
@@ -459,7 +470,7 @@ const MessageCenter = () => {
         try {
           await signalrService.sendMessageToGroup(`request_${selectedRequest.id}`, {
             RequestId: selectedRequest.id,
-            Message: responseForm.message.trim(),
+            Message: messageToSend,
             SenderId: user?.id,
             UserId: user?.id,
             SenderName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
@@ -472,15 +483,6 @@ const MessageCenter = () => {
           // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
         }
       }
-      
-      setResponseForm({
-        message: '',
-        filePath: '',
-        selectedFile: null,
-        fileBase64: null,
-        fileName: null,
-        fileMimeType: null
-      });
       
       // SignalR mesajı otomatik olarak UI'ı güncelleyecek, tekrar yüklemeye gerek yok
       // await loadRequestResponses(selectedRequest.id);
@@ -499,6 +501,16 @@ const MessageCenter = () => {
     
     const messageId = Date.now().toString();
     setSendingMessages(prev => new Set([...prev, messageId]));
+    
+    // Formu hemen temizle - mesaj gönderilir gönderilmez
+    setResponseForm({
+      message: '',
+      filePath: '',
+      selectedFile: null,
+      fileBase64: null,
+      fileName: null,
+      fileMimeType: null
+    });
     
     try {
       const responseData = {
@@ -532,16 +544,6 @@ const MessageCenter = () => {
           // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
         }
       }
-      
-      // Formu temizle
-      setResponseForm({
-        message: '',
-        filePath: '',
-        selectedFile: null,
-        fileBase64: null,
-        fileName: null,
-        fileMimeType: null
-      });
       
       // SignalR mesajı otomatik olarak UI'ı güncelleyecek, tekrar yüklemeye gerek yok
       // await loadRequestResponses(selectedRequest.id);

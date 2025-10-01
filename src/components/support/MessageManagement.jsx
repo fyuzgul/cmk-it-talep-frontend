@@ -605,66 +605,16 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const handleAddResponse = async () => {
     if (!responseForm.message.trim() || !selectedRequest) return;
     
-    try {
-      const responseData = {
-        message: responseForm.message.trim(),
-        filePath: responseForm.filePath || null, // Backward compatibility
-        fileBase64: responseForm.fileBase64,
-        fileName: responseForm.fileName,
-        fileMimeType: responseForm.fileMimeType,
-        requestId: selectedRequest.id,
-        isDeleted: false
-      };
-      
-      // HTTP API ile veritabanına kaydet
-      await createRequestResponse(responseData);
-      
-      // SignalR ile mesajı gönder (gerçek zamanlı güncelleme için)
-      if (signalrService.isConnected) {
-        try {
-          await signalrService.sendMessageToGroup(`request_${selectedRequest.id}`, {
-            RequestId: selectedRequest.id,
-            Message: responseForm.message.trim(),
-            SenderId: user?.id,
-            UserId: user?.id,
-            SenderName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
-            CreatedDate: new Date().toISOString(),
-            Timestamp: new Date().toISOString()
-          });
-          console.log('✅ SignalR message sent successfully');
-        } catch (signalrError) {
-          console.error('❌ SignalR error:', signalrError);
-          // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
-        }
-      } else {
-        console.warn('⚠️ SignalR not connected, message sent via HTTP only');
-      }
-      
-      setResponseForm({
-        message: '',
-        filePath: '',
-        selectedFile: null,
-        fileBase64: null,
-        fileName: null,
-        fileMimeType: null
-      });
-      
-      // SignalR mesajı otomatik olarak UI'ı güncelleyecek, tekrar yüklemeye gerek yok
-      // await loadRequestResponses(selectedRequest.id);
-      
-      toast.success('Cevap başarıyla eklendi.');
-    } catch (error) {
-      // Console log removed
-      toast.error('Cevap eklenirken bir hata oluştu.');
-    }
-  };
-
-  // Mesaj parametresi ile cevap ekleme (Enter tuşu için)
-  const handleAddResponseWithMessage = async (messageToSend) => {
-    if (!messageToSend || !selectedRequest) return;
-    
-    const messageId = Date.now().toString();
-    setSendingMessages(prev => new Set([...prev, messageId]));
+    // Formu hemen temizle - mesaj gönderilir gönderilmez
+    const messageToSend = responseForm.message.trim();
+    setResponseForm({
+      message: '',
+      filePath: '',
+      selectedFile: null,
+      fileBase64: null,
+      fileName: null,
+      fileMimeType: null
+    });
     
     try {
       const responseData = {
@@ -701,15 +651,67 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
         console.warn('⚠️ SignalR not connected, message sent via HTTP only');
       }
       
-      // Formu temizle
-      setResponseForm({
-        message: '',
-        filePath: '',
-        selectedFile: null,
-        fileBase64: null,
-        fileName: null,
-        fileMimeType: null
-      });
+      // SignalR mesajı otomatik olarak UI'ı güncelleyecek, tekrar yüklemeye gerek yok
+      // await loadRequestResponses(selectedRequest.id);
+      
+      toast.success('Cevap başarıyla eklendi.');
+    } catch (error) {
+      // Console log removed
+      toast.error('Cevap eklenirken bir hata oluştu.');
+    }
+  };
+
+  // Mesaj parametresi ile cevap ekleme (Enter tuşu için)
+  const handleAddResponseWithMessage = async (messageToSend) => {
+    if (!messageToSend || !selectedRequest) return;
+    
+    const messageId = Date.now().toString();
+    setSendingMessages(prev => new Set([...prev, messageId]));
+    
+    // Formu hemen temizle - mesaj gönderilir gönderilmez
+    setResponseForm({
+      message: '',
+      filePath: '',
+      selectedFile: null,
+      fileBase64: null,
+      fileName: null,
+      fileMimeType: null
+    });
+    
+    try {
+      const responseData = {
+        message: messageToSend,
+        filePath: responseForm.filePath || null, // Backward compatibility
+        fileBase64: responseForm.fileBase64,
+        fileName: responseForm.fileName,
+        fileMimeType: responseForm.fileMimeType,
+        requestId: selectedRequest.id,
+        isDeleted: false
+      };
+      
+      // HTTP API ile veritabanına kaydet
+      await createRequestResponse(responseData);
+      
+      // SignalR ile mesajı gönder (gerçek zamanlı güncelleme için)
+      if (signalrService.isConnected) {
+        try {
+          await signalrService.sendMessageToGroup(`request_${selectedRequest.id}`, {
+            RequestId: selectedRequest.id,
+            Message: messageToSend,
+            SenderId: user?.id,
+            UserId: user?.id,
+            SenderName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+            CreatedDate: new Date().toISOString(),
+            Timestamp: new Date().toISOString()
+          });
+          console.log('✅ SignalR message sent successfully');
+        } catch (signalrError) {
+          console.error('❌ SignalR error:', signalrError);
+          // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
+        }
+      } else {
+        console.warn('⚠️ SignalR not connected, message sent via HTTP only');
+      }
       
       // SignalR mesajı otomatik olarak UI'ı güncelleyecek, tekrar yüklemeye gerek yok
       // await loadRequestResponses(selectedRequest.id);
