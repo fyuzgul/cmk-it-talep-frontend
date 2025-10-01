@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import signalrService from '../services/signalrService';
-import userService from '../services/userService';
+import { userService } from '../services/userService';
 import api from '../services/api';
 import ErrorBoundary from './common/ErrorBoundary';
 import DepartmentManagement from './admin/DepartmentManagement';

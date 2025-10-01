@@ -107,7 +107,7 @@ export const requestService = {
   },
 
   createRequest: async (requestData) => {
-    const response = await api.post('/Request', requestData);
+    const response = await api.post('/Request/create', requestData);
     return response.data;
   },
 
@@ -157,6 +157,27 @@ export const requestService = {
   // Mesajlaşma için ek metodlar
   getAllRequests: async () => {
     const response = await api.get('/Request');
+    return response.data;
+  },
+
+  // CC (Carbon Copy) işlemleri
+  getCCUsersByRequest: async (requestId) => {
+    const response = await api.get(`/RequestCC/request/${requestId}`);
+    return response.data;
+  },
+
+  addCCUser: async (requestId, userId) => {
+    const response = await api.post('/RequestCC/add', { requestId, userId });
+    return response.data;
+  },
+
+  removeCCUser: async (requestId, userId) => {
+    const response = await api.delete('/RequestCC/remove', { data: { requestId, userId } });
+    return response.data;
+  },
+
+  updateCCUsers: async (requestId, userIds) => {
+    const response = await api.put('/RequestCC/update', { requestId, userIds });
     return response.data;
   },
 };

@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRequests } from '../../hooks/useRequests';
 import { useSupport } from '../../hooks/useSupport';
 import { usePriorityLevels } from '../../hooks/usePriorityLevels';
+import { useUsers } from '../../hooks/useUsers';
 import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, formatFileSize } from '../../utils/fileUtils';
 import Base64FileViewer from '../common/Base64FileViewer';
 
@@ -27,6 +28,19 @@ const CreateRequest = ({ onRequestCreated }) => {
     error: priorityError
   } = usePriorityLevels();
 
+  const { 
+    users, 
+    loading: usersLoading,
+    error: usersError
+  } = useUsers();
+
+  // Debug: Kullanıcıları konsola yazdır
+  useEffect(() => {
+    console.log('CreateRequest - Users loaded:', users);
+    console.log('CreateRequest - Users loading:', usersLoading);
+    console.log('CreateRequest - Users error:', usersError);
+  }, [users, usersLoading, usersError]);
+
   const [formData, setFormData] = useState({
     supportTypeId: '',
     requestTypeId: '',
@@ -35,8 +49,12 @@ const CreateRequest = ({ onRequestCreated }) => {
     screenshotFile: null,
     screenshotBase64: null,
     screenshotFileName: null,
-    screenshotMimeType: null
+    screenshotMimeType: null,
+    ccUserIds: []
   });
+
+  // Seçilen kullanıcı bilgilerini sakla (geçici çözüm)
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   const [filteredRequestTypes, setFilteredRequestTypes] = useState([]);
   const [isLoadingRequestTypes, setIsLoadingRequestTypes] = useState(false);
@@ -128,6 +146,18 @@ const CreateRequest = ({ onRequestCreated }) => {
     }
   };
 
+  const handleCCUserToggle = (userId) => {
+    setFormData(prev => ({
+      ...prev,
+      ccUserIds: prev.ccUserIds.includes(userId)
+        ? prev.ccUserIds.filter(id => id !== userId)
+        : [...prev.ccUserIds, userId]
+    }));
+    
+    // Seçilen kullanıcı bilgilerinden de kaldır
+    setSelectedUsers(prev => prev.filter(user => user.id !== userId));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -143,7 +173,8 @@ const CreateRequest = ({ onRequestCreated }) => {
         screenshotFilePath: formData.screenshotFile ? formData.screenshotFile.name : null, // Backward compatibility
         screenshotBase64: formData.screenshotBase64,
         screenshotFileName: formData.screenshotFileName,
-        screenshotMimeType: formData.screenshotMimeType
+        screenshotMimeType: formData.screenshotMimeType,
+        ccUserIds: formData.ccUserIds
       };
 
       await createRequest(requestData);
@@ -156,8 +187,10 @@ const CreateRequest = ({ onRequestCreated }) => {
         screenshotFile: null,
         screenshotBase64: null,
         screenshotFileName: null,
-        screenshotMimeType: null
+        screenshotMimeType: null,
+        ccUserIds: []
       });
+      setSelectedUsers([]);
       setFilteredRequestTypes([]);
       setIsLoadingRequestTypes(false);
       
@@ -278,6 +311,93 @@ const CreateRequest = ({ onRequestCreated }) => {
             </select>
           </div>
 
+          {/* CC (Carbon Copy) Kullanıcı Seçimi */}
+          <div>
+            <label className="block text-sm font-medium text-primary-dark mb-2">
+              Bilgilendirilecek Kullanıcılar (İsteğe Bağlı)
+            </label>
+            <div className="relative">
+              <select
+                value=""
+                onChange={(e) => {
+                  console.log('Dropdown onChange - value:', e.target.value, 'type:', typeof e.target.value);
+                  
+                  if (e.target.value && e.target.value !== "") {
+                    const userId = parseInt(e.target.value);
+                    console.log('Parsed userId:', userId, 'isNaN:', isNaN(userId));
+                    
+                    if (!isNaN(userId) && !formData.ccUserIds.includes(userId)) {
+                      const selectedUser = users.find(u => u.id === userId);
+                      console.log('Selected user:', selectedUser);
+                      
+                      setFormData(prev => ({
+                        ...prev,
+                        ccUserIds: [...prev.ccUserIds, userId]
+                      }));
+                      
+                      // Seçilen kullanıcı bilgilerini de sakla
+                      if (selectedUser) {
+                        setSelectedUsers(prev => [...prev, selectedUser]);
+                      }
+                    }
+                  }
+                  e.target.value = ""; // Select'i sıfırla
+                }}
+                className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
+              >
+                <option value="">Kullanıcı seçin...</option>
+                {usersLoading ? (
+                  <option disabled>Kullanıcılar yükleniyor...</option>
+                ) : usersError ? (
+                  <option disabled>Kullanıcılar yüklenirken hata oluştu: {usersError}</option>
+                ) : users.length === 0 ? (
+                  <option disabled>Kullanıcı bulunamadı (Toplam: {users.length})</option>
+                ) : (
+                  (() => {
+                    const filteredUsers = users.filter(u => u.id !== user.id && !formData.ccUserIds.includes(u.id));
+                    console.log('Filtered users for dropdown:', filteredUsers);
+                    return filteredUsers.map((userItem) => (
+                      <option key={userItem.id} value={userItem.id}>
+                        {userItem.firstName} {userItem.lastName} - {userItem.email} ({userItem.department?.name || 'Departman yok'})
+                      </option>
+                    ));
+                  })()
+                )}
+              </select>
+              <div className="text-xs text-gray-500 mt-1">
+                Kullanıcı seçmek için dropdown'dan birini seçin
+              </div>
+            </div>
+            {selectedUsers.length > 0 && (
+              <div className="mt-3">
+                <div className="text-xs text-gray-600 mb-2 font-medium">Seçilen kullanıcılar:</div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedUsers.map((selectedUser) => (
+                    <span
+                      key={selectedUser.id}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-red/10 text-primary-red border border-primary-red/20 hover:bg-primary-red/20 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      {selectedUser.firstName} {selectedUser.lastName}
+                      <button
+                        type="button"
+                        onClick={() => handleCCUserToggle(selectedUser.id)}
+                        className="ml-2 text-primary-red hover:text-primary-red-700 hover:bg-primary-red/20 rounded-full p-0.5 transition-colors"
+                        title="Kullanıcıyı kaldır"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Açıklama */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-primary-dark mb-2">
@@ -374,15 +494,20 @@ const CreateRequest = ({ onRequestCreated }) => {
           <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
             <button
               type="button"
-              onClick={() => setFormData({
-                requestTypeId: '',
-                priorityLevelId: '',
-                description: '',
-                screenshotFile: null,
-                screenshotBase64: null,
-                screenshotFileName: null,
-                screenshotMimeType: null
-              })}
+              onClick={() => {
+                setFormData({
+                  supportTypeId: '',
+                  requestTypeId: '',
+                  priorityLevelId: '',
+                  description: '',
+                  screenshotFile: null,
+                  screenshotBase64: null,
+                  screenshotFileName: null,
+                  screenshotMimeType: null,
+                  ccUserIds: []
+                });
+                setSelectedUsers([]);
+              }}
               className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md text-primary-dark hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-red transition-colors"
             >
               Temizle

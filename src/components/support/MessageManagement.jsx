@@ -9,6 +9,7 @@ import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, f
 import Base64FileViewer from '../common/Base64FileViewer';
 import ErrorBoundary from '../common/ErrorBoundary';
 import api from '../../services/api';
+import { requestService } from '../../services/requestService';
 
 const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const { user } = useAuth();
@@ -48,6 +49,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [screenshotData, setScreenshotData] = useState(null);
   const [sendingMessages, setSendingMessages] = useState(new Set());
+  const [ccUsers, setCCUsers] = useState([]);
 
   // Support kullanıcısının taleplerini yükle
   const loadSupportRequests = useCallback(async () => {
@@ -123,6 +125,17 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
       toast.error('Cevaplar yüklenirken bir hata oluştu.');
     }
   }, [getRequestResponsesByRequestId, markConversationAsRead]);
+
+  // CC kullanıcılarını yükle
+  const loadCCUsers = useCallback(async (requestId) => {
+    try {
+      const ccUsersData = await requestService.getCCUsersByRequest(requestId);
+      setCCUsers(ccUsersData);
+    } catch (error) {
+      console.error('Error loading CC users:', error);
+      setCCUsers([]);
+    }
+  }, []);
 
   // Screenshot verisini yükle
   const loadScreenshotData = useCallback(async (request) => {
@@ -482,6 +495,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const handleRequestSelect = async (request) => {
     setSelectedRequest(request);
     await loadRequestResponses(request.id);
+    await loadCCUsers(request.id);
     
     // Screenshot verisini yükle
     await loadScreenshotData(request);
@@ -949,6 +963,26 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                             {formatDate(selectedRequest.createdDate)}
                           </span>
                         </div>
+                        {ccUsers.length > 0 && (
+                          <div className="mt-2">
+                            <div className="flex items-center space-x-2">
+                              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              <span className="text-sm text-gray-600 font-medium">Bilgilendirilenler:</span>
+                              <div className="flex flex-wrap gap-1">
+                                {ccUsers.map((ccUser) => (
+                                  <span
+                                    key={ccUser.id}
+                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200"
+                                  >
+                                    {ccUser.user?.firstName} {ccUser.user?.lastName}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
