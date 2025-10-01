@@ -180,6 +180,30 @@ export const requestService = {
     const response = await api.put('/RequestCC/update', { requestId, userIds });
     return response.data;
   },
+
+  // Get requests with pagination for support users
+  getRequestsWithPagination: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    
+    if (params.supportProviderId) queryParams.append('supportProviderId', params.supportProviderId);
+    if (params.requestCreatorId) queryParams.append('requestCreatorId', params.requestCreatorId);
+    if (params.requestStatusId) queryParams.append('requestStatusId', params.requestStatusId);
+    if (params.requestTypeId) queryParams.append('requestTypeId', params.requestTypeId);
+    if (params.description) queryParams.append('description', params.description);
+    if (params.search) queryParams.append('description', params.search);
+    if (params.page) queryParams.append('page', params.page);
+    if (params.pageSize) queryParams.append('pageSize', params.pageSize);
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+
+    const queryString = queryParams.toString();
+    const url = queryString ? `/Request/paginated?${queryString}` : '/Request/paginated';
+    
+    const response = await api.get(url);
+    return response.data;
+  },
 };
 
 export default requestService;

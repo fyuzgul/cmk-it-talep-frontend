@@ -226,6 +226,7 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
     requestTypes,
     requestStatuses,
     fetchRequests,
+    fetchRequestsWithPagination,
     updateRequest,
     loading,
     error
@@ -262,17 +263,18 @@ const SupportKanbanBoard = ({ onRequestSelect, onTabChange }) => {
     })
   );
 
-  // Load requests for support users
+  // Load requests for support users with pagination
   const loadRequests = useCallback(async () => {
     try {
-      await fetchRequests({
+      await fetchRequestsWithPagination({
         supportProviderId: user?.id,
-        pageSize: 100 // Get more requests for kanban view
+        page: 1,
+        pageSize: 50 // Optimized page size for better performance
       });
     } catch (error) {
       // Console log removed
     }
-  }, [user?.id, fetchRequests]);
+  }, [user?.id, fetchRequestsWithPagination]);
 
   useEffect(() => {
     loadRequests();

@@ -158,6 +158,19 @@ export const useRequests = () => {
     }
   }, []);
 
+  // Pagination ile talep yükleme
+  const fetchRequestsWithPagination = useCallback(async (params = {}) => {
+    try {
+      setError(null);
+      const data = await requestService.getRequestsWithPagination(params);
+      setRequests(data.requests || []);
+      return data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Talepler yüklenirken bir hata oluştu');
+      throw err;
+    }
+  }, []);
+
   const getRequestById = useCallback(async (id) => {
     try {
       setLoading(true);
@@ -271,6 +284,7 @@ export const useRequests = () => {
     // Request Management
     requests,
     fetchRequests,
+    fetchRequestsWithPagination,
     getRequestById,
     createRequest,
     updateRequest,

@@ -54,7 +54,7 @@ export const useRequestResponses = () => {
       setLoading(true);
       setError(null);
       const result = await requestResponseService.createRequestResponse(responseData);
-      // ❌ REMOVED: await fetchRequestResponses() - tüm mesajları yüklemek yerine SignalR kullan
+      // ✅ SignalR ile gerçek zamanlı güncelleme yapılacak, gereksiz veri yükleme yok
       return result;
     } catch (err) {
       setError(err.response?.data?.message || 'Talep yanıtı oluşturulurken bir hata oluştu');
@@ -69,7 +69,7 @@ export const useRequestResponses = () => {
       setLoading(true);
       setError(null);
       const result = await requestResponseService.updateRequestResponse(id, responseData);
-      // ❌ REMOVED: await fetchRequestResponses() - gereksiz veri yüklemesini engelle
+      // ✅ SignalR ile gerçek zamanlı güncelleme yapılacak, gereksiz veri yükleme yok
       return result;
     } catch (err) {
       setError(err.response?.data?.message || 'Talep yanıtı güncellenirken bir hata oluştu');
@@ -84,7 +84,7 @@ export const useRequestResponses = () => {
       setLoading(true);
       setError(null);
       const result = await requestResponseService.deleteRequestResponse(id);
-      // ❌ REMOVED: await fetchRequestResponses() - gereksiz veri yüklemesini engelle
+      // ✅ SignalR ile gerçek zamanlı güncelleme yapılacak, gereksiz veri yükleme yok
       return result;
     } catch (err) {
       setError(err.response?.data?.message || 'Talep yanıtı silinirken bir hata oluştu');
@@ -99,7 +99,7 @@ export const useRequestResponses = () => {
       setLoading(true);
       setError(null);
       const result = await requestResponseService.markAsRead(messageId);
-      // ❌ REMOVED: await fetchRequestResponses() - SignalR zaten güncelleyecek
+      // ✅ SignalR ile gerçek zamanlı güncelleme yapılacak, gereksiz veri yükleme yok
       return result;
     } catch (err) {
       setError(err.response?.data?.message || 'Mesaj okundu olarak işaretlenirken bir hata oluştu');
@@ -114,7 +114,7 @@ export const useRequestResponses = () => {
       setLoading(true);
       setError(null);
       const result = await requestResponseService.markConversationAsRead(requestId);
-      // ❌ REMOVED: await fetchRequestResponses() - 24 saniyelik gecikmeye sebep olan satır!
+      // ✅ SignalR ile gerçek zamanlı güncelleme yapılacak, gereksiz veri yükleme yok
       return result;
     } catch (err) {
       setError(err.response?.data?.message || 'Konuşma okundu olarak işaretlenirken bir hata oluştu');

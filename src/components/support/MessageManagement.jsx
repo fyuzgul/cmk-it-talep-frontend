@@ -18,7 +18,8 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
     requests,
     requestTypes, 
     requestStatuses, 
-    fetchRequests 
+    fetchRequests,
+    fetchRequestsWithPagination
   } = useRequests();
   const { supportTypes } = useSupport();
   const { 
@@ -53,42 +54,33 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const [sendingMessages, setSendingMessages] = useState(new Set());
   const [ccUsers, setCCUsers] = useState([]);
 
-  // Support kullanıcısının taleplerini yükle
+  // Support kullanıcısının taleplerini yükle (optimized with pagination)
   const loadSupportRequests = useCallback(async () => {
     if (!user?.id) {
-      // Console log removed
       return;
     }
     
-    // Console log removed
-    
     try {
       setLoading(true);
-      // Console log removed
-      const supportRequests = await fetchRequests({
+      const result = await fetchRequestsWithPagination({
         supportProviderId: user?.id,
-        pageSize: 100
+        page: 1,
+        pageSize: 50 // Optimized page size
       });
-      // Console log removed
-      // Console log removed
       
       // API'den gelen veriyi direkt kullan
-      if (supportRequests && supportRequests.length > 0) {
-        // Console log removed
-        setSupportRequests(supportRequests);
+      if (result?.requests && result.requests.length > 0) {
+        setSupportRequests(result.requests);
       } else {
-        // Console log removed
         setSupportRequests([]);
       }
     } catch (error) {
-      // Console log removed
-      // Console log removed
       toast.error('Talepler yüklenirken bir hata oluştu.');
       setSupportRequests([]);
     } finally {
       setLoading(false);
     }
-  }, [user?.id, fetchRequests]);
+  }, [user?.id, fetchRequestsWithPagination]);
 
   // Seçili talebin cevaplarını yükle
   const loadRequestResponses = useCallback(async (requestId) => {
