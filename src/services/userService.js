@@ -50,5 +50,38 @@ export const userService = {
       console.error('Kullanıcılar ID\'lere göre yüklenirken hata:', error);
       return { success: false, error: error.message };
     }
+  },
+
+  // Yeni kullanıcı oluştur
+  async createUser(userData) {
+    try {
+      const response = await api.post('/User', userData);
+      return response.data;
+    } catch (error) {
+      console.error('Kullanıcı oluşturulurken hata:', error);
+      throw error;
+    }
+  },
+
+  // Kullanıcı güncelle
+  async updateUser(id, userData) {
+    try {
+      const response = await api.put(`/User/${id}`, userData);
+      return response.data;
+    } catch (error) {
+      console.error('Kullanıcı güncellenirken hata:', error);
+      throw error;
+    }
+  },
+
+  // Kullanıcı sil
+  async deleteUser(id) {
+    try {
+      const response = await api.delete(`/User/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Kullanıcı silinirken hata:', error);
+      throw error;
+    }
   }
 };

@@ -249,7 +249,7 @@ const UserManagement = () => {
             </div>
           </div>
         ) : (
-          users.map((user) => (
+          users && users.map((user) => (
             <div key={user.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group">
               <div className="p-6">
                 <div className="flex items-start justify-between">
@@ -434,7 +434,7 @@ const UserManagement = () => {
                     } rounded-lg shadow-sm focus:outline-none focus:ring-2 transition-colors duration-200`}
                   >
                     <option value="">Departman seçiniz</option>
-                    {departments.map((dept) => (
+                    {departments && departments.map((dept) => (
                       <option key={dept.id} value={dept.id}>
                         {dept.name}
                       </option>
@@ -458,7 +458,7 @@ const UserManagement = () => {
                     } rounded-lg shadow-sm focus:outline-none focus:ring-2 transition-colors duration-200`}
                   >
                     <option value="">Kullanıcı türü seçiniz</option>
-                    {userTypes.map((type) => (
+                    {userTypes && userTypes.map((type) => (
                       <option key={type.id} value={type.id}>
                         {type.name}
                       </option>
