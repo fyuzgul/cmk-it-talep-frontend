@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRequests } from '../../hooks/useRequests';
 import { useRequestResponses } from '../../hooks/useRequestResponses';
+import { useSupport } from '../../hooks/useSupport';
 import { useSocket } from '../../hooks/useSocket';
 import signalrService from '../../services/signalrService';
 import toast from 'react-hot-toast';
@@ -19,6 +20,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
     requestStatuses, 
     fetchRequests 
   } = useRequests();
+  const { supportTypes } = useSupport();
   const { 
     getRequestResponsesByRequestId, 
     createRequestResponse, 
@@ -34,7 +36,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const [filters, setFilters] = useState({
     search: '',
     statusId: '',
-    typeId: ''
+    supportTypeId: ''
   });
   const [responseForm, setResponseForm] = useState({
     message: '',
@@ -485,7 +487,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
     if (filters.statusId && request.requestStatusId !== parseInt(filters.statusId)) {
       return false;
     }
-    if (filters.typeId && request.requestTypeId !== parseInt(filters.typeId)) {
+    if (filters.supportTypeId && request.requestType?.supportTypeId !== parseInt(filters.supportTypeId)) {
       return false;
     }
     return true;
@@ -826,14 +828,14 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                 
                 <div>
                   <select
-                    value={filters.typeId}
-                    onChange={(e) => setFilters(prev => ({ ...prev, typeId: e.target.value }))}
+                    value={filters.supportTypeId}
+                    onChange={(e) => setFilters(prev => ({ ...prev, supportTypeId: e.target.value }))}
                     className="w-full px-4 py-2 text-sm border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white/80 backdrop-blur-sm shadow-sm transition-all duration-200"
                   >
-                    <option value="">Tüm Türler</option>
-                    {requestTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
+                    <option value="">Tüm Destek Türleri</option>
+                    {supportTypes.map((supportType) => (
+                      <option key={supportType.id} value={supportType.id}>
+                        {supportType.name}
                       </option>
                     ))}
                   </select>

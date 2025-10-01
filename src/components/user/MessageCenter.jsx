@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRequests } from '../../hooks/useRequests';
 import { useRequestResponses } from '../../hooks/useRequestResponses';
+import { useSupport } from '../../hooks/useSupport';
 import signalrService from '../../services/signalrService';
 import toast from 'react-hot-toast';
 import { convertFileToBase64, validateFileType, validateFileSize, getFileIcon, formatFileSize } from '../../utils/fileUtils';
@@ -14,7 +15,8 @@ import { requestService } from '../../services/requestService';
 const MessageCenter = () => {
   const { user } = useAuth();
   
-  const { getRequestsByCreator } = useRequests();
+  const { getRequestsByCreator, requestTypes, requestStatuses } = useRequests();
+  const { supportTypes } = useSupport();
   const { getRequestResponsesByRequestId, createRequestResponse, markAsRead, markConversationAsRead } = useRequestResponses();
   
   const [userRequests, setUserRequests] = useState([]);
@@ -22,7 +24,11 @@ const MessageCenter = () => {
   const [ccUsers, setCCUsers] = useState([]);
   const [requestResponses, setRequestResponses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState('all'); // all, unread, read
+  const [filters, setFilters] = useState({
+    search: '',
+    statusId: '',
+    supportTypeId: ''
+  });
   const [responseForm, setResponseForm] = useState({
     message: '',
     filePath: '',
@@ -365,26 +371,28 @@ const MessageCenter = () => {
 
   // Durum adı al
   const getStatusName = (statusId) => {
-    const statusNames = {
-      1: 'Yeni',
-      2: 'İşlemde',
-      3: 'Beklemede',
-      4: 'Çözüldü',
-      5: 'Kapalı'
-    };
-    return statusNames[statusId] || 'Bilinmiyor';
+    const status = requestStatuses?.find(s => s.id === statusId);
+    return status?.name || 'Bilinmiyor';
+  };
+
+  // Talep türü adı al
+  const getTypeName = (typeId) => {
+    const type = requestTypes?.find(t => t.id === typeId);
+    return type?.name || 'Bilinmiyor';
   };
 
   // Filtrelenmiş talepler
   const filteredRequests = userRequests.filter(request => {
-    if (selectedTab === 'unread') {
-      // Cevapları olan talepler (okunmamış sayılır)
-      return request.requestResponses && request.requestResponses.length > 0;
-    } else if (selectedTab === 'read') {
-      // Cevapları olmayan talepler (okunmuş sayılır)
-      return !request.requestResponses || request.requestResponses.length === 0;
+    if (filters.search && !request.description.toLowerCase().includes(filters.search.toLowerCase())) {
+      return false;
     }
-    return true; // all
+    if (filters.statusId && request.requestStatusId !== parseInt(filters.statusId)) {
+      return false;
+    }
+    if (filters.supportTypeId && request.requestType?.supportTypeId !== parseInt(filters.supportTypeId)) {
+      return false;
+    }
+    return true;
   });
 
   // Talep seçildiğinde
@@ -673,37 +681,54 @@ const MessageCenter = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-4">Taleplerim</h3>
               
               {/* Filtreler */}
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedTab('all')}
-                  className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
-                    selectedTab === 'all'
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg transform scale-105'
-                      : 'bg-white/70 text-gray-700 hover:bg-white hover:shadow-md border border-gray-200'
-                  }`}
+              <div className="space-y-3">
+                {/* Arama */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Talep açıklamasında ara..."
+                    value={filters.search}
+                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                    className="w-full px-4 py-2 pl-10 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/70 backdrop-blur-sm"
+                  />
+                  <svg className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+
+                {/* Durum Filtresi */}
+                <select
+                  value={filters.statusId}
+                  onChange={(e) => setFilters(prev => ({ ...prev, statusId: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/70 backdrop-blur-sm"
                 >
-                  Tümü
-                </button>
-                <button
-                  onClick={() => setSelectedTab('unread')}
-                  className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
-                    selectedTab === 'unread'
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg transform scale-105'
-                      : 'bg-white/70 text-gray-700 hover:bg-white hover:shadow-md border border-gray-200'
-                  }`}
+                  <option value="">Tüm Durumlar</option>
+                  {requestStatuses?.map(status => (
+                    <option key={status.id} value={status.id}>{status.name}</option>
+                  ))}
+                </select>
+
+                {/* Destek Türü Filtresi */}
+                <select
+                  value={filters.supportTypeId}
+                  onChange={(e) => setFilters(prev => ({ ...prev, supportTypeId: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/70 backdrop-blur-sm"
                 >
-                  Cevaplı
-                </button>
-                <button
-                  onClick={() => setSelectedTab('read')}
-                  className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
-                    selectedTab === 'read'
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg transform scale-105'
-                      : 'bg-white/70 text-gray-700 hover:bg-white hover:shadow-md border border-gray-200'
-                  }`}
-                >
-                  Cevapsız
-                </button>
+                  <option value="">Tüm Destek Türleri</option>
+                  {supportTypes?.map(supportType => (
+                    <option key={supportType.id} value={supportType.id}>{supportType.name}</option>
+                  ))}
+                </select>
+
+                {/* Filtreleri Temizle */}
+                {(filters.search || filters.statusId || filters.supportTypeId) && (
+                  <button
+                    onClick={() => setFilters({ search: '', statusId: '', supportTypeId: '' })}
+                    className="w-full px-3 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Filtreleri Temizle
+                  </button>
+                )}
               </div>
             </div>
 
@@ -716,9 +741,9 @@ const MessageCenter = () => {
                     </svg>
                   </div>
                   <p className="text-gray-500 font-medium">
-                    {selectedTab === 'all' ? 'Henüz talep oluşturmadınız' : 
-                     selectedTab === 'unread' ? 'Cevaplı talep bulunmuyor' : 
-                     'Cevapsız talep bulunmuyor'}
+                    {filteredRequests.length === 0 && userRequests.length === 0 
+                      ? 'Henüz talep oluşturmadınız' 
+                      : 'Filtrelere uygun talep bulunmuyor'}
                   </p>
                 </div>
               ) : (
