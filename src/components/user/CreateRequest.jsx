@@ -62,7 +62,20 @@ const CreateRequest = ({ onRequestCreated }) => {
         try {
           setIsLoadingRequestTypes(true);
           const requestTypes = await getRequestTypesBySupportType(parseInt(value));
-          setFilteredRequestTypes(requestTypes);
+          
+          // Sort request types - "Diğer" types should come last
+          const sortedRequestTypes = [...requestTypes].sort((a, b) => {
+            const aIsOther = a.name.toLowerCase() === 'diğer';
+            const bIsOther = b.name.toLowerCase() === 'diğer';
+            
+            if (aIsOther && !bIsOther) return 1;
+            if (!aIsOther && bIsOther) return -1;
+            
+            // If both are "Diğer" or both are not "Diğer", sort alphabetically
+            return a.name.localeCompare(b.name, 'tr');
+          });
+          
+          setFilteredRequestTypes(sortedRequestTypes);
         } catch (error) {
           console.error('Error fetching request types:', error);
           setFilteredRequestTypes([]);

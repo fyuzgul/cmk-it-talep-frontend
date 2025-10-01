@@ -219,13 +219,23 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   // SignalR mesajlarını dinle - gerçek zamanlı güncelleme
   useEffect(() => {
     const handleNewMessage = (message) => {
-      // Console log removed
+      console.log('🔔 New message received:', message);
       
       // Seçili talep için yeni mesaj geldi
       if (message.RequestId === selectedRequest?.id) {
-        // Console log removed
-        // Cevapları yeniden yükle
-        loadRequestResponses(selectedRequest.id);
+        // Mesajı direkt olarak state'e ekle (optimistik güncelleme)
+        setRequestResponses(prev => [...prev, {
+          id: message.Id || Date.now(),
+          message: message.Message,
+          senderId: message.SenderId || message.UserId,
+          createdDate: message.CreatedDate || message.Timestamp,
+          sender: {
+            firstName: message.SenderName?.split(' ')[0] || '',
+            lastName: message.SenderName?.split(' ')[1] || ''
+          },
+          isRead: false,
+          isReadByCurrentUser: false
+        }]);
         
         // Support requests listesini de güncelle
         setSupportRequests(prev => 
@@ -234,7 +244,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
               ? { 
                   ...req, 
                   requestResponses: [...(req.requestResponses || []), {
-                    id: Date.now(), // Geçici ID
+                    id: Date.now(),
                     message: message.Message,
                     senderId: message.SenderId || message.UserId,
                     createdDate: message.CreatedDate || message.Timestamp,
@@ -246,7 +256,25 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
           )
         );
       } else {
-        // Console log removed, current: ${selectedRequest?.id}`);
+        // Başka bir talep için mesaj - sadece talep listesini güncelle
+        console.log('Message for another request:', message.RequestId, 'current:', selectedRequest?.id);
+        setSupportRequests(prev => 
+          prev.map(req => 
+            req.id === message.RequestId 
+              ? { 
+                  ...req, 
+                  requestResponses: [...(req.requestResponses || []), {
+                    id: Date.now(),
+                    message: message.Message,
+                    senderId: message.SenderId || message.UserId,
+                    createdDate: message.CreatedDate || message.Timestamp,
+                    isOwnMessage: message.IsOwnMessage || false,
+                    isReadByCurrentUser: message.IsReadByCurrentUser || false
+                  }]
+                }
+              : req
+          )
+        );
       }
     };
 
@@ -473,13 +501,13 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
       // Console log removed
     }
     
-    // SignalR grubuna katıl
+    // SignalR grubuna katıl - backend ile aynı format kullan
     if (signalrService.isConnected) {
       try {
-        await signalrService.joinRoom(`Request_${request.id}`);
-        // Console log removed
+        await signalrService.joinRoom(`request_${request.id}`);
+        console.log(`✅ Joined SignalR room: request_${request.id}`);
       } catch (error) {
-        // Console log removed
+        console.error('❌ SignalR group join error:', error);
       }
     }
     
@@ -578,24 +606,22 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
       // SignalR ile mesajı gönder (gerçek zamanlı güncelleme için)
       if (signalrService.isConnected) {
         try {
-          await signalrService.sendMessageToGroup(`Request_${selectedRequest.id}`, {
+          await signalrService.sendMessageToGroup(`request_${selectedRequest.id}`, {
             RequestId: selectedRequest.id,
             Message: responseForm.message.trim(),
             SenderId: user?.id,
             UserId: user?.id,
-            SenderName: user?.firstName && user?.lastName 
-              ? `${user.firstName} ${user.lastName}` 
-              : user?.firstName || 'Destek',
+            SenderName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
             CreatedDate: new Date().toISOString(),
             Timestamp: new Date().toISOString()
           });
-          // Console log removed
+          console.log('✅ SignalR message sent successfully');
         } catch (signalrError) {
-          // Console log removed
+          console.error('❌ SignalR error:', signalrError);
           // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
         }
       } else {
-        // Console log removed
+        console.warn('⚠️ SignalR not connected, message sent via HTTP only');
       }
       
       setResponseForm({
@@ -607,8 +633,8 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
         fileMimeType: null
       });
       
-      // Cevapları yeniden yükle
-      await loadRequestResponses(selectedRequest.id);
+      // SignalR mesajı otomatik olarak UI'ı güncelleyecek, tekrar yüklemeye gerek yok
+      // await loadRequestResponses(selectedRequest.id);
       
       toast.success('Cevap başarıyla eklendi.');
     } catch (error) {
@@ -641,28 +667,36 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
       // SignalR ile mesajı gönder (gerçek zamanlı güncelleme için)
       if (signalrService.isConnected) {
         try {
-          await signalrService.sendMessageToGroup(`Request_${selectedRequest.id}`, {
+          await signalrService.sendMessageToGroup(`request_${selectedRequest.id}`, {
             RequestId: selectedRequest.id,
             Message: messageToSend,
             SenderId: user?.id,
             UserId: user?.id,
-            SenderName: user?.firstName && user?.lastName 
-              ? `${user.firstName} ${user.lastName}` 
-              : user?.firstName || 'Destek',
+            SenderName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
             CreatedDate: new Date().toISOString(),
             Timestamp: new Date().toISOString()
           });
-          // Console log removed
+          console.log('✅ SignalR message sent successfully');
         } catch (signalrError) {
-          // Console log removed
+          console.error('❌ SignalR error:', signalrError);
           // SignalR hatası olsa bile HTTP API başarılı olduğu için devam et
         }
       } else {
-        // Console log removed
+        console.warn('⚠️ SignalR not connected, message sent via HTTP only');
       }
       
-      // Cevapları yeniden yükle
-      await loadRequestResponses(selectedRequest.id);
+      // Formu temizle
+      setResponseForm({
+        message: '',
+        filePath: '',
+        selectedFile: null,
+        fileBase64: null,
+        fileName: null,
+        fileMimeType: null
+      });
+      
+      // SignalR mesajı otomatik olarak UI'ı güncelleyecek, tekrar yüklemeye gerek yok
+      // await loadRequestResponses(selectedRequest.id);
       
       toast.success('Cevap başarıyla eklendi.');
     } catch (error) {
@@ -681,18 +715,8 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      // Mesajı hemen temizle
       const messageToSend = responseForm.message.trim();
       if (messageToSend && selectedRequest) {
-        setResponseForm({
-          message: '',
-          filePath: '',
-          selectedFile: null,
-          fileBase64: null,
-          fileName: null,
-          fileMimeType: null
-        });
-        // Mesajı gönder
         handleAddResponseWithMessage(messageToSend);
       }
     }
@@ -938,13 +962,13 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                       <div className="bg-[#2a2f32] rounded-lg p-1.5 shadow-sm">
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs font-medium text-[#e9edef]">
-                            {selectedRequest.requestCreator?.firstName} {selectedRequest.requestCreator?.lastName}
+                            {`${selectedRequest.requestCreator?.firstName || ''} ${selectedRequest.requestCreator?.lastName || ''}`.trim() || 'Kullanıcı'}
                           </p>
                           <p className="text-xs text-[#8696a0]">
                             {formatTime(selectedRequest.createdDate)}
                           </p>
                         </div>
-                        <p className="text-[#e9edef] text-sm whitespace-pre-wrap leading-relaxed">{selectedRequest.description}</p>
+                        <p className="text-[#e9edef] text-sm whitespace-normal leading-relaxed">{selectedRequest.description}</p>
                         {screenshotData && (
                           <div className="mt-2">
                             <Base64FileViewer
@@ -993,18 +1017,28 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                                     <p className={`text-xs font-medium ${isFromCurrentUser ? 'text-white' : 'text-[#e9edef]'}`}>
                                       {(() => {
                                         if (isFromCurrentUser) {
-                                          return 'Sen';
+                                          // Kendi mesajı - kendi adını göster
+                                          return `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Sen';
                                         }
                                         
-                        // Sender name logic - use sender object from API response
-                        const senderName = response.senderName;
-                        const senderFirstName = response.sender?.firstName;
-                        const senderLastName = response.sender?.lastName;
-                        const requestCreatorFirstName = selectedRequest.requestCreator?.firstName;
-                        const requestCreatorLastName = selectedRequest.requestCreator?.lastName;
-                        
-                        // Use sender object from API response (lowercase 's')
-                        return senderName || (response.sender ? `${senderFirstName} ${senderLastName}` : `${requestCreatorFirstName} ${requestCreatorLastName}`);
+                                        // Karşı tarafın mesajı - gönderenin adını göster
+                                        // 1. Önce response'daki sender objesini kontrol et
+                                        if (response.sender?.firstName || response.sender?.lastName) {
+                                          return `${response.sender.firstName || ''} ${response.sender.lastName || ''}`.trim();
+                                        }
+                                        
+                                        // 2. SenderName field'ını kontrol et
+                                        if (response.senderName) {
+                                          return response.senderName;
+                                        }
+                                        
+                                        // 3. Request creator'ı kontrol et
+                                        if (selectedRequest.requestCreator?.firstName || selectedRequest.requestCreator?.lastName) {
+                                          return `${selectedRequest.requestCreator.firstName || ''} ${selectedRequest.requestCreator.lastName || ''}`.trim();
+                                        }
+                                        
+                                        // 4. Fallback
+                                        return 'Kullanıcı';
                                       })()}
                                     </p>
                                     <p className={`text-xs ${isFromCurrentUser ? 'text-green-100' : 'text-[#8696a0]'}`}>
@@ -1038,7 +1072,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                                   )}
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                  <p className={`text-sm whitespace-pre-wrap leading-relaxed ${isFromCurrentUser ? 'text-white' : 'text-[#e9edef]'}`}>
+                                  <p className={`text-sm whitespace-normal leading-relaxed ${isFromCurrentUser ? 'text-white' : 'text-[#e9edef]'}`}>
                                     {response.message}
                                   </p>
                                   {sendingMessages.has(response.id?.toString()) && (
@@ -1087,7 +1121,7 @@ const MessageManagement = ({ selectedRequestId, onRequestSelected }) => {
                           onChange={(e) => setResponseForm({...responseForm, message: e.target.value})}
                           onKeyPress={handleKeyPress}
                           rows={2}
-                          className="w-full px-4 py-3 border border-[#2a2f32] rounded-full focus:outline-none focus:ring-1 focus:ring-[#00a884] focus:border-[#00a884] resize-none text-sm bg-[#2a2f32] text-[#e9edef] placeholder-[#8696a0] transition-all duration-200"
+                          className="w-full px-4 py-3 border border-[#2a2f32] rounded-full focus:outline-none focus:ring-1 focus:ring-[#00a884] focus:border-[#00a884] resize-none text-sm bg-[#2a2f32] text-[#e9edef] placeholder-[#8696a0] transition-all duration-200 whitespace-normal"
                           placeholder="Mesaj yazın..."
                         />
                       </div>

@@ -82,6 +82,35 @@ export const useUsers = () => {
     }
   };
 
+  // Silinen kullanıcılar için metodlar
+  const fetchDeletedUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await userService.getDeletedUsers();
+      return data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Silinen kullanıcılar yüklenirken bir hata oluştu');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const restoreUser = async (id) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await userService.restoreUser(id);
+      return result;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Kullanıcı geri getirilirken bir hata oluştu');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -116,5 +145,7 @@ export const useUsers = () => {
     createUser,
     updateUser,
     deleteUser,
+    fetchDeletedUsers,
+    restoreUser,
   };
 };

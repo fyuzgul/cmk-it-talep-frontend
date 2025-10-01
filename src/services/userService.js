@@ -41,6 +41,17 @@ export const userService = {
     const response = await api.post('/User/GetByIds', { ids });
     return response.data;
   },
+
+  // Silinen kullanıcılar için metodlar
+  getDeletedUsers: async () => {
+    const response = await api.get('/User/deleted');
+    return response.data;
+  },
+
+  restoreUser: async (id) => {
+    const response = await api.post(`/User/restore/${id}`);
+    return response.data;
+  },
 };
 
 export default userService;

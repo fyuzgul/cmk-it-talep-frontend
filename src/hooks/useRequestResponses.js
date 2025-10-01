@@ -54,7 +54,7 @@ export const useRequestResponses = () => {
       setLoading(true);
       setError(null);
       const result = await requestResponseService.createRequestResponse(responseData);
-      await fetchRequestResponses(); // Refresh the list
+      // ❌ REMOVED: await fetchRequestResponses() - tüm mesajları yüklemek yerine SignalR kullan
       return result;
     } catch (err) {
       setError(err.response?.data?.message || 'Talep yanıtı oluşturulurken bir hata oluştu');
@@ -62,14 +62,14 @@ export const useRequestResponses = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchRequestResponses]);
+  }, []);
 
   const updateRequestResponse = useCallback(async (id, responseData) => {
     try {
       setLoading(true);
       setError(null);
       const result = await requestResponseService.updateRequestResponse(id, responseData);
-      await fetchRequestResponses(); // Refresh the list
+      // ❌ REMOVED: await fetchRequestResponses() - gereksiz veri yüklemesini engelle
       return result;
     } catch (err) {
       setError(err.response?.data?.message || 'Talep yanıtı güncellenirken bir hata oluştu');
@@ -77,14 +77,14 @@ export const useRequestResponses = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchRequestResponses]);
+  }, []);
 
   const deleteRequestResponse = useCallback(async (id) => {
     try {
       setLoading(true);
       setError(null);
       const result = await requestResponseService.deleteRequestResponse(id);
-      await fetchRequestResponses(); // Refresh the list
+      // ❌ REMOVED: await fetchRequestResponses() - gereksiz veri yüklemesini engelle
       return result;
     } catch (err) {
       setError(err.response?.data?.message || 'Talep yanıtı silinirken bir hata oluştu');
@@ -92,14 +92,14 @@ export const useRequestResponses = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchRequestResponses]);
+  }, []);
 
   const markAsRead = useCallback(async (messageId) => {
     try {
       setLoading(true);
       setError(null);
       const result = await requestResponseService.markAsRead(messageId);
-      await fetchRequestResponses(); // Refresh the list
+      // ❌ REMOVED: await fetchRequestResponses() - SignalR zaten güncelleyecek
       return result;
     } catch (err) {
       setError(err.response?.data?.message || 'Mesaj okundu olarak işaretlenirken bir hata oluştu');
@@ -107,14 +107,14 @@ export const useRequestResponses = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchRequestResponses]);
+  }, []);
 
   const markConversationAsRead = useCallback(async (requestId) => {
     try {
       setLoading(true);
       setError(null);
       const result = await requestResponseService.markConversationAsRead(requestId);
-      await fetchRequestResponses(); // Refresh the list
+      // ❌ REMOVED: await fetchRequestResponses() - 24 saniyelik gecikmeye sebep olan satır!
       return result;
     } catch (err) {
       setError(err.response?.data?.message || 'Konuşma okundu olarak işaretlenirken bir hata oluştu');
@@ -122,7 +122,7 @@ export const useRequestResponses = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchRequestResponses]);
+  }, []);
 
   const getUnreadResponses = useCallback(async () => {
     try {

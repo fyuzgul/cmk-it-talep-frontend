@@ -32,6 +32,18 @@ const MyRequests = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
+  // Sort request types - "Diğer" types should come last
+  const sortedRequestTypes = [...requestTypes].sort((a, b) => {
+    const aIsOther = a.name.toLowerCase() === 'diğer';
+    const bIsOther = b.name.toLowerCase() === 'diğer';
+    
+    if (aIsOther && !bIsOther) return 1;
+    if (!aIsOther && bIsOther) return -1;
+    
+    // If both are "Diğer" or both are not "Diğer", sort alphabetically
+    return a.name.localeCompare(b.name, 'tr');
+  });
+
   const loadUserRequests = useCallback(async () => {
     if (user?.id) {
       await getRequestsByCreator(user.id);
@@ -362,7 +374,7 @@ const MyRequests = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-red focus:border-primary-red text-sm"
             >
               <option value="">Tüm Türler</option>
-              {requestTypes.map((type) => (
+              {sortedRequestTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name}
                 </option>

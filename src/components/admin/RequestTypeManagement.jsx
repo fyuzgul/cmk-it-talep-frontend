@@ -115,6 +115,18 @@ const RequestTypeManagement = () => {
     setErrors({});
   };
 
+  // Sort request types - "Diğer" types should come last
+  const sortedRequestTypes = [...requestTypes].sort((a, b) => {
+    const aIsOther = a.name.toLowerCase() === 'diğer';
+    const bIsOther = b.name.toLowerCase() === 'diğer';
+    
+    if (aIsOther && !bIsOther) return 1;
+    if (!aIsOther && bIsOther) return -1;
+    
+    // If both are "Diğer" or both are not "Diğer", sort alphabetically
+    return a.name.localeCompare(b.name, 'tr');
+  });
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -176,7 +188,7 @@ const RequestTypeManagement = () => {
 
       {/* Request Types Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {requestTypes.length === 0 ? (
+        {sortedRequestTypes.length === 0 ? (
           <div className="col-span-full">
             <div className="text-center py-12">
               <div className="mx-auto h-24 w-24 text-gray-400">
@@ -200,7 +212,7 @@ const RequestTypeManagement = () => {
             </div>
           </div>
         ) : (
-          requestTypes.map((type) => (
+          sortedRequestTypes.map((type) => (
             <div key={type.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group">
               <div className="p-6">
                 <div className="flex items-start justify-between">

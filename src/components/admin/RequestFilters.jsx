@@ -11,6 +11,18 @@ const RequestFilters = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [searchValue, setSearchValue] = useState(filters.search || '');
 
+  // Sort request types - "Diğer" types should come last
+  const sortedRequestTypes = [...requestTypes].sort((a, b) => {
+    const aIsOther = a.name.toLowerCase() === 'diğer';
+    const bIsOther = b.name.toLowerCase() === 'diğer';
+    
+    if (aIsOther && !bIsOther) return 1;
+    if (!aIsOther && bIsOther) return -1;
+    
+    // If both are "Diğer" or both are not "Diğer", sort alphabetically
+    return a.name.localeCompare(b.name, 'tr');
+  });
+
   // Debounce search input
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -101,7 +113,7 @@ const RequestFilters = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="">Tümü</option>
-              {requestTypes.map((type) => (
+              {sortedRequestTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name}
                 </option>

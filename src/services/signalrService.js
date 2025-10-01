@@ -52,10 +52,11 @@ class SignalRService {
           },
           withCredentials: true,
           skipNegotiation: false,
-          transport: signalR.HttpTransportType.WebSockets
+          // Otomatik transport seçimi - WebSocket başarısız olursa Long Polling'e düşer
+          transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling
         })
-        .withAutomaticReconnect([0, 2000, 10000, 30000])
-        .configureLogging(signalR.LogLevel.Warning)
+        .withAutomaticReconnect([0, 1000, 3000, 5000, 10000, 30000])
+        .configureLogging(signalR.LogLevel.Information)
         .build();
 
       // Event listeners
