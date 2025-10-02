@@ -83,5 +83,27 @@ export const userService = {
       console.error('Kullanıcı silinirken hata:', error);
       throw error;
     }
+  },
+
+  // Silinen kullanıcıları getir
+  async getDeletedUsers() {
+    try {
+      const response = await api.get('/User/deleted');
+      return response.data;
+    } catch (error) {
+      console.error('Silinen kullanıcılar yüklenirken hata:', error);
+      throw error;
+    }
+  },
+
+  // Kullanıcıyı geri getir
+  async restoreUser(id) {
+    try {
+      const response = await api.post(`/User/restore/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Kullanıcı geri getirilirken hata:', error);
+      throw error;
+    }
   }
 };

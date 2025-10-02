@@ -55,6 +55,30 @@ export const useUsers = () => {
     }
   };
 
+  const fetchDeletedUsers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const deletedUsers = await userService.getDeletedUsers();
+      return deletedUsers;
+    } catch (err) {
+      setError(err.message || 'Silinen kullanıcılar yüklenirken hata oluştu');
+      console.error('useUsers fetchDeletedUsers error:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const restoreUser = async (id) => {
+    try {
+      await userService.restoreUser(id);
+      await fetchUsers(); // Listeyi yenile
+    } catch (error) {
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -68,6 +92,8 @@ export const useUsers = () => {
     refetch: fetchUsers,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    fetchDeletedUsers,
+    restoreUser
   };
 };
