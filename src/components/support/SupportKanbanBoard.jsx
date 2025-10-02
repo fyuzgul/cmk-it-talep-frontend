@@ -98,6 +98,35 @@ const SortableRequestCard = ({ request, requestTypes, requestStatuses, onViewReq
     return status?.name || 'Bilinmiyor';
   };
 
+  const getPriorityName = (request) => {
+    // Priority bilgisi request.priorityLevel?.name olarak gelecek
+    return request.priorityLevel?.name || 'Bilinmiyor';
+  };
+
+  const getSupportTypeName = (request) => {
+    // Support type bilgisi request.requestType?.supportType?.name olarak gelecek
+    return request.requestType?.supportType?.name || 'Bilinmiyor';
+  };
+
+  const getPriorityBadgeClass = (priorityName) => {
+    switch (priorityName?.toLowerCase()) {
+      case 'yüksek':
+      case 'high':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'orta':
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'düşük':
+      case 'low':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'acil':
+      case 'urgent':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -117,6 +146,9 @@ const SortableRequestCard = ({ request, requestTypes, requestStatuses, onViewReq
             </span>
             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusBadgeClass(getStatusName(request.requestStatusId))}`}>
               {getStatusName(request.requestStatusId)}
+            </span>
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getPriorityBadgeClass(getPriorityName(request))}`}>
+              {getPriorityName(request)}
             </span>
           </div>
         </div>
@@ -142,6 +174,11 @@ const SortableRequestCard = ({ request, requestTypes, requestStatuses, onViewReq
             </span>
           </div>
           <span className="text-xs flex-shrink-0 ml-2">{formatDate(request.createdDate)}</span>
+        </div>
+        
+        {/* Support Type Information */}
+        <div className="text-xs text-gray-500">
+          <span className="font-medium">Destek Türü:</span> {getSupportTypeName(request)}
         </div>
         
         {request.supportProvider && (
