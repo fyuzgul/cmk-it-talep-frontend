@@ -521,6 +521,9 @@ const Dashboard = () => {
                       </button>
                     </div>
 
+                    {/* Support KPI Dashboard - only visible for admins */}
+                    <SupportKpiDashboard />
+
                   </div>
                 )}
                 {isUser && (
@@ -566,7 +569,6 @@ const Dashboard = () => {
                       </button>
                     </div>
 
-                    <SupportKpiDashboard />
                   </div>
                 )}
                 {isSupport && (
