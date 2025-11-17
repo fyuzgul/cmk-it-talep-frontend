@@ -13,6 +13,7 @@ import SupportTypeManagement from './admin/SupportTypeManagement';
 import UserManagement from './admin/UserManagement';
 import DeletedUsersManagement from './admin/DeletedUsersManagement';
 import PriorityLevelManagement from './admin/PriorityLevelManagement';
+import SupportKpiDashboard from './admin/SupportKpiDashboard';
 import CreateRequest from './user/CreateRequest';
 import MyRequests from './user/MyRequests';
 import MessageCenter from './user/MessageCenter';
@@ -564,6 +565,8 @@ const Dashboard = () => {
                         <p className="text-sm text-gray-600 mt-2">Mesajlarınızı görüntüleyin</p>
                       </button>
                     </div>
+
+                    <SupportKpiDashboard />
                   </div>
                 )}
                 {isSupport && (
